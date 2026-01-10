@@ -960,7 +960,7 @@ export default function App() {
 <body>
   <div class="container">
     <h1>Weekly Performance Report</h1>
-    <p class="subtitle">Year: ${currentYear} | Week: ${weekKey} | Generated: ${new Date().toLocaleDateString()}</p>
+    <p class="subtitle"><strong>${user.user_metadata?.username || user.email?.split('@')[0] || 'User'}</strong> | Year: ${currentYear} | Week: ${weekKey} | Generated: ${new Date().toLocaleDateString()}</p>
 
     <h3 class="section-title" style="margin-top: 0;">Sales Pipeline Metrics</h3>
     <div class="metrics-grid">
@@ -1736,7 +1736,7 @@ export default function App() {
                 <User size={16} className="text-slate-600" />
               )}
               <span className="text-xs font-bold max-w-[60px] sm:max-w-[80px] truncate hidden sm:inline text-slate-800">
-                {user.email?.split('@')[0] || "User"}
+                {user.user_metadata?.username || user.email?.split('@')[0] || "User"}
               </span>
               <button 
                 onClick={handleLogout}
