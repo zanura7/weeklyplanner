@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, X, ChevronLeft, ChevronRight, Save, Trash2, Sparkles, Loader2, LogOut, User, Download, Menu, Calendar } from 'lucide-react';
+import { Plus, X, ChevronLeft, ChevronRight, Save, Trash2, Sparkles, Loader2, LogOut, User, Download, Calendar } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -59,8 +59,8 @@ const CATEGORIES = {
     id: 'income',
     label: 'Income',
     fullLabel: 'Income Generating',
-    color: 'bg-emerald-100 border-emerald-300 text-emerald-800',
-    activeColor: 'bg-emerald-200 border-emerald-400 text-emerald-900 ring-2 ring-emerald-400',
+    color: 'bg-emerald-200 border-emerald-400 text-emerald-900 shadow-sm hover:bg-emerald-300',
+    activeColor: 'bg-emerald-200 border-emerald-400 text-emerald-900 ring-2 ring-offset-1 ring-slate-400 shadow-md',
     barColor: 'bg-emerald-500',
     activities: [
       '1. Setting New Sales Appointments',
@@ -73,8 +73,8 @@ const CATEGORIES = {
     id: 'supporting',
     label: 'Support',
     fullLabel: 'Supporting',
-    color: 'bg-amber-100 border-amber-300 text-amber-800',
-    activeColor: 'bg-amber-200 border-amber-400 text-amber-900 ring-2 ring-amber-400',
+    color: 'bg-amber-200 border-amber-400 text-amber-900 shadow-sm hover:bg-amber-300',
+    activeColor: 'bg-amber-200 border-amber-400 text-amber-900 ring-2 ring-offset-1 ring-slate-400 shadow-md',
     barColor: 'bg-amber-500',
     activities: [
       '5. Planning',
@@ -92,8 +92,8 @@ const CATEGORIES = {
     id: 'self_dev',
     label: 'Growth',
     fullLabel: 'Self Development',
-    color: 'bg-blue-100 border-blue-300 text-blue-800',
-    activeColor: 'bg-blue-200 border-blue-400 text-blue-900 ring-2 ring-blue-400',
+    color: 'bg-blue-200 border-blue-400 text-blue-900 shadow-sm hover:bg-blue-300',
+    activeColor: 'bg-blue-200 border-blue-400 text-blue-900 ring-2 ring-offset-1 ring-slate-400 shadow-md',
     barColor: 'bg-blue-500',
     activities: [
       '14. Self Development',
@@ -104,8 +104,8 @@ const CATEGORIES = {
     id: 'personal',
     label: 'Personal',
     fullLabel: 'Personal / Leisure',
-    color: 'bg-rose-100 border-rose-300 text-rose-800',
-    activeColor: 'bg-rose-200 border-rose-400 text-rose-900 ring-2 ring-rose-400',
+    color: 'bg-rose-200 border-rose-400 text-rose-900 shadow-sm hover:bg-rose-300',
+    activeColor: 'bg-rose-200 border-rose-400 text-rose-900 ring-2 ring-offset-1 ring-slate-400 shadow-md',
     barColor: 'bg-rose-500',
     activities: [
       '16. Exercise',
@@ -119,15 +119,14 @@ const CATEGORIES = {
 };
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const DAYS_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 7);
 
-const Modal = ({ isOpen, onClose, title, children, fullScreen = false }) => {
+const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
   
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
-      <div className={`bg-white w-full ${fullScreen ? 'h-full sm:h-auto sm:max-h-[90vh]' : 'max-h-[90vh]'} sm:max-w-md sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col`}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
+      <div className="bg-white w-full max-h-[90vh] sm:max-w-md sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col ring-1 ring-black/10">
         <div className="px-4 sm:px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 flex-shrink-0">
           <h3 className="text-lg sm:text-xl font-bold tracking-tight text-slate-800">{title}</h3>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-500 transition-colors active:scale-95">
@@ -142,7 +141,13 @@ const Modal = ({ isOpen, onClose, title, children, fullScreen = false }) => {
   );
 };
 
-const TimeSelectionBlock = ({ formStartTime, setFormStartTime, formEndTime, setFormEndTime, initialDate, setSelectedDayIndex }) => {
+const TimeSelectionBlock = ({ 
+  formStartTime, setFormStartTime, 
+  formEndTime, setFormEndTime, 
+  currentDate,
+  startDayIndex, setStartDayIndex,
+  endDayIndex, setEndDayIndex
+}) => {
   const startHour = HOURS[0]; 
   const endHour = HOURS[HOURS.length - 1] + 1; 
 
@@ -174,51 +179,72 @@ const TimeSelectionBlock = ({ formStartTime, setFormStartTime, formEndTime, setF
     }
   }, [formStartTime, formEndTime, setFormStartTime, setFormEndTime]);
   
-  const getWeekDateOptions = (date) => {
+  const weekDateOptions = useMemo(() => {
     const options = [];
-    const startOfWeek = new Date(date);
-    startOfWeek.setDate(startOfWeek.getDate() - (startOfWeek.getDay() === 0 ? 6 : startOfWeek.getDay() - 1));
-    
+    const d = new Date(currentDate);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const startOfWeek = new Date(d.setDate(diff));
+
     for (let i = 0; i < 7; i++) {
-      const day = new Date(startOfWeek);
-      day.setDate(startOfWeek.getDate() + i);
+      const dayDate = new Date(startOfWeek);
+      dayDate.setDate(startOfWeek.getDate() + i);
       options.push({
-        value: day.toISOString().split('T')[0],
         dayIndex: i, 
-        label: `${DAYS[i]} (${day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`
+        label: `${DAYS[i]} (${dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`
       });
     }
     return options;
-  };
-  
-  const weekDateOptions = getWeekDateOptions(initialDate);
-  const selectedDateString = initialDate.toISOString().split('T')[0];
+  }, [currentDate]);
   
   return (
     <>
-      <div className="mb-4">
-        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Day</label>
-        <select
-          value={selectedDateString}
-          onChange={(e) => {
-            const selectedOption = weekDateOptions.find(opt => opt.value === e.target.value);
-            if (selectedOption) {
-              setSelectedDayIndex(selectedOption.dayIndex);
-            }
-          }}
-          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
-        >
-          {weekDateOptions.map(option => (
-            <option key={option.value} value={option.value}> 
-              {option.label}
-            </option>
-          ))}
-        </select>
+      <div className="grid grid-cols-2 gap-4 mb-5">
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">From Day</label>
+          <select
+            value={startDayIndex}
+            onChange={(e) => {
+              const newStart = parseInt(e.target.value);
+              setStartDayIndex(newStart);
+              if (newStart > endDayIndex) {
+                setEndDayIndex(newStart);
+              }
+            }}
+            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
+          >
+            {weekDateOptions.map(option => (
+              <option key={`start-${option.dayIndex}`} value={option.dayIndex}> 
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">To Day</label>
+          <select
+            value={endDayIndex}
+            onChange={(e) => {
+              const newEnd = parseInt(e.target.value);
+              setEndDayIndex(newEnd);
+              if (newEnd < startDayIndex) {
+                setStartDayIndex(newEnd);
+              }
+            }}
+            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
+          >
+            {weekDateOptions.map(option => (
+              <option key={`end-${option.dayIndex}`} value={option.dayIndex}> 
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
       
-      <div className="grid grid-cols-2 gap-3 pb-4 border-b border-slate-200">
+      <div className="grid grid-cols-2 gap-4 pb-5 border-b border-slate-200">
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Start</label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Start Time</label>
           <select 
             value={formStartTime} 
             onChange={(e) => setFormStartTime(e.target.value)}
@@ -230,7 +256,7 @@ const TimeSelectionBlock = ({ formStartTime, setFormStartTime, formEndTime, setF
           </select>
         </div>
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">End</label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">End Time</label>
           <select 
             value={formEndTime} 
             onChange={(e) => setFormEndTime(e.target.value)}
@@ -246,7 +272,7 @@ const TimeSelectionBlock = ({ formStartTime, setFormStartTime, formEndTime, setF
   );
 };
 
-const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weeklyOverviewDoc, onRemarksChange, onAiAnalyze }) => {
+const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weeklyOverviewDoc, onRemarksChange, onAiAnalyze, getDayDate }) => {
   const [remarks, setRemarks] = useState(weeklyOverviewDoc?.remarks || '');
   const [aiText, setAiText] = useState(weeklyOverviewDoc?.ai_analysis || null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -345,54 +371,54 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
-      <div className="bg-white w-full h-[95vh] sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col">
-        <div className="px-4 sm:px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 flex-shrink-0">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
+      <div className="bg-slate-50 w-full h-[95vh] sm:h-auto sm:max-h-[90vh] sm:max-w-3xl sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col ring-1 ring-black/5">
+        <div className="px-6 sm:px-8 py-6 border-b border-slate-200 flex justify-between items-center bg-white/90 backdrop-blur-md flex-shrink-0">
           <div>
-            <h3 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">Weekly Overview</h3>
-            <p className="text-xs text-slate-500 font-semibold">{weekKey}</p>
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Weekly Overview</h3>
+            <p className="text-sm text-slate-500 mt-1 font-semibold">Performance Summary for {weekKey}</p>
           </div>
           <button onClick={handleModalClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500">
-            <X size={22} />
+            <X size={24} />
           </button>
         </div>
         
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1 bg-slate-50">
-          <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-6">
+        <div className="p-6 sm:p-8 overflow-y-auto flex-1 bg-slate-100">
+          <div className="grid grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-10">
             {['O', 'P', 'F', 'R'].map(metric => {
               const style = {
-                'O': { label: 'Open', bg: 'bg-pink-50', border: 'border-pink-200', text: 'text-pink-700' },
-                'P': { label: 'Present', bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700' },
-                'F': { label: 'Follow', bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' },
-                'R': { label: 'Close', bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700' }
+                'O': { label: 'Open', classes: 'bg-white border-pink-200 ring-2 ring-pink-50', text: 'text-pink-700' },
+                'P': { label: 'Present', classes: 'bg-white border-purple-200 ring-2 ring-purple-50', text: 'text-purple-700' },
+                'F': { label: 'Follow', classes: 'bg-white border-emerald-200 ring-2 ring-emerald-50', text: 'text-emerald-700' },
+                'R': { label: 'Close', classes: 'bg-white border-amber-200 ring-2 ring-amber-50', text: 'text-amber-700' }
               }[metric];
 
               return (
-                <div key={metric} className={`${style.bg} ${style.border} border rounded-xl p-3 sm:p-4 text-center`}>
-                  <div className={`text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-wider ${style.text} opacity-80`}>
+                <div key={metric} className={`${style.classes} border rounded-2xl p-4 sm:p-5 text-center shadow-sm`}>
+                  <div className={`text-[10px] sm:text-xs font-bold mb-2 uppercase tracking-widest ${style.text} opacity-90`}>
                     {style.label}
                   </div>
-                  <div className={`text-2xl sm:text-3xl font-black ${style.text}`}>{stats.metricTotals[metric]}</div>
+                  <div className={`text-3xl sm:text-4xl font-black ${style.text} tracking-tight`}>{stats.metricTotals[metric]}</div>
                 </div>
               )
             })}
           </div>
 
-          <h4 className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wider">Time Distribution</h4>
-          <div className="space-y-4 mb-6 bg-white p-4 rounded-xl border border-slate-200">
+          <h4 className="text-xs font-bold text-slate-600 mb-4 sm:mb-5 uppercase tracking-widest pl-1">Time Distribution (Hours)</h4>
+          <div className="space-y-5 sm:space-y-6 mb-8 sm:mb-10 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
             {Object.values(CATEGORIES).map(cat => {
               const count = stats.catCounts[cat.id];
               const percent = getPercent(count);
               return (
                 <div key={cat.id}>
-                  <div className="flex justify-between text-xs sm:text-sm mb-1.5">
-                    <span className="font-bold text-slate-700">{cat.fullLabel}</span>
-                    <span className="text-slate-500 font-semibold">{count}h ({percent}%)</span>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="font-bold text-slate-800">{cat.fullLabel}</span>
+                    <span className="text-slate-500 font-semibold">{count} hrs ({percent}%)</span>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
                     <div 
-                      className={`h-full ${cat.barColor} transition-all duration-500`} 
-                      style={{ width: `${percent}%` }}
+                      className={`h-full ${cat.barColor}`} 
+                      style={{ width: `${percent}%`, transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)' }}
                     ></div>
                   </div>
                 </div>
@@ -400,51 +426,51 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
             })}
           </div>
           
-          <div className="mb-6">
-            <h4 className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">
+          <div className="mb-8 sm:mb-10">
+            <h4 className="text-xs font-bold text-slate-600 mb-3 uppercase tracking-widest pl-1">
               Coach Comments
             </h4>
             <textarea
               value={remarks}
               onChange={handleRemarksLocalChange}
               onBlur={handleRemarksBlur}
-              placeholder="Add your coaching notes..."
-              className="w-full p-3 sm:p-4 bg-white border border-slate-200 rounded-xl text-sm min-h-[100px] focus:ring-2 focus:ring-blue-500 transition-all outline-none font-medium text-slate-700 resize-none"
+              placeholder="Add your own personalized coaching notes..."
+              className="w-full p-4 sm:p-5 bg-white border border-slate-200 rounded-2xl text-sm min-h-[120px] sm:min-h-[140px] focus:ring-2 focus:ring-blue-500 transition-all outline-none shadow-sm font-medium text-slate-700 resize-none"
             />
           </div>
 
-          <div className="bg-indigo-50 rounded-xl p-4 sm:p-5 border border-indigo-100">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-indigo-900 font-bold text-sm sm:text-base flex items-center gap-2">
-                <Sparkles size={16} className="text-blue-500" />
-                AI Coach
+          <div className="bg-indigo-50/50 rounded-2xl p-5 sm:p-7 border border-indigo-100 shadow-sm">
+            <div className="flex items-center justify-between mb-4 sm:mb-5">
+              <h4 className="text-indigo-900 font-bold text-base sm:text-lg flex items-center gap-2 tracking-tight">
+                <Sparkles size={18} className="text-blue-500" />
+                AI Performance Coach
               </h4>
               {!aiText && !isAnalyzing && (
                 <button 
                   onClick={handleAiAnalyze}
-                  className="text-xs bg-blue-500 text-white px-3 py-1.5 rounded-full hover:bg-blue-600 transition-all font-bold flex items-center gap-1 active:scale-95"
+                  className="text-xs bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-all font-bold flex items-center gap-1 shadow-md shadow-blue-200 active:scale-95"
                 >
-                  <Sparkles size={12} /> Analyze
+                  <Sparkles size={12} /> Analyze Week
                 </button>
               )}
             </div>
             
             {isAnalyzing && (
-              <div className="flex items-center gap-2 text-blue-500 text-sm py-3 justify-center">
-                <Loader2 className="animate-spin" size={18} />
-                <span className="font-bold">Analyzing...</span>
+              <div className="flex items-center gap-3 text-blue-500 text-sm py-4 justify-center">
+                <Loader2 className="animate-spin" size={20} />
+                <span className="font-bold">Thinking...</span>
               </div>
             )}
             
             {aiError && (
-              <div className="text-sm p-3 bg-red-50 text-red-600 rounded-lg border border-red-100 font-semibold">
-                {aiError}
+              <div className="text-sm p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 font-semibold">
+                Error: {aiError} Please try again.
               </div>
             )}
 
             {aiText && (
               <div 
-                className="text-slate-700 bg-white p-3 sm:p-4 rounded-lg border border-indigo-100 text-sm leading-relaxed font-medium"
+                className="text-slate-800 bg-white p-4 sm:p-5 rounded-xl border border-indigo-100 shadow-sm text-sm leading-relaxed font-medium"
                 style={{ whiteSpace: 'pre-line' }} 
               >
                 {aiText}
@@ -453,16 +479,22 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
             
             {!aiText && !isAnalyzing && !aiError && (
               <p className="text-sm text-indigo-600/70 text-center py-2">
-                Tap "Analyze" to get AI insights
+                Tap "Analyze Week" to get AI insights on your performance.
               </p>
             )}
           </div>
+          
+          {stats.totalHours === 0 && (
+            <div className="mt-8 text-center text-slate-400 text-sm font-bold">
+              No activities recorded for this week yet.
+            </div>
+          )}
         </div>
         
-        <div className="p-4 border-t border-slate-200 bg-white flex-shrink-0">
+        <div className="p-4 sm:p-5 border-t border-slate-200 bg-white/80 backdrop-blur-md flex justify-end flex-shrink-0">
           <button 
             onClick={handleModalClose}
-            className="w-full py-3 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-black transition-all active:scale-[0.98]"
+            className="px-8 py-3 bg-slate-900 text-white rounded-full text-sm font-bold hover:bg-black transition-transform active:scale-95 shadow-lg"
           >
             Done
           </button>
@@ -475,6 +507,7 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
 const LoginScreen = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -488,7 +521,15 @@ const LoginScreen = ({ onLogin }) => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({ email, password });
+        const { error } = await supabase.auth.signUp({ 
+          email, 
+          password,
+          options: {
+            data: {
+              username: username
+            }
+          }
+        });
         if (error) throw error;
         setMessage('Check your email for confirmation link!');
       } else {
@@ -513,6 +554,19 @@ const LoginScreen = ({ onLogin }) => {
           <p className="text-blue-100 text-sm">Track your activities & grow</p>
         </div>
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-4">
+          {isSignUp && (
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Username</label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Your name"
+                required
+                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
+              />
+            </div>
+          )}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Email</label>
             <input
@@ -612,10 +666,11 @@ export default function App() {
   const [generatingDay, setGeneratingDay] = useState(null);
   const [taskGenError, setTaskGenError] = useState(null); 
   
-  const [selectedDayIndex, setSelectedDayIndex] = useState(0); 
+  const [startDayIndex, setStartDayIndex] = useState(0);
+  const [endDayIndex, setEndDayIndex] = useState(0);
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   
   const [formActivity, setFormActivity] = useState('');
   const [formCategory, setFormCategory] = useState('income');
@@ -655,7 +710,6 @@ export default function App() {
     setHeaderImage(randomImg);
   }, []);
 
-  // Auth state listener
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user || null);
@@ -670,29 +724,6 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleGoogleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin
-        }
-      });
-      if (error) console.error("Login failed", error);
-    } catch (error) {
-      console.error("Login failed", error);
-    }
-  };
-
-  const handleGuestLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInAnonymously();
-      if (error) console.error("Guest login failed", error);
-    } catch (error) {
-      console.error("Guest login failed", error);
-    }
-  };
-
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
@@ -705,12 +736,10 @@ export default function App() {
     }
   };
 
-  // Load data from Supabase
   useEffect(() => {
     if (!user) return;
 
     const loadData = async () => {
-      // Load appointments
       const { data: apptData } = await supabase
         .from('appointments')
         .select('*')
@@ -722,7 +751,6 @@ export default function App() {
         setAppointments(apptObj);
       }
 
-      // Load tasks
       const { data: taskData } = await supabase
         .from('tasks')
         .select('*')
@@ -734,7 +762,6 @@ export default function App() {
         setDailyTasks(taskObj);
       }
 
-      // Load metrics
       const { data: metricData } = await supabase
         .from('metrics')
         .select('*')
@@ -746,7 +773,6 @@ export default function App() {
         setMetrics(metricObj);
       }
 
-      // Load weekly overviews
       const { data: overviewData } = await supabase
         .from('weekly_overviews')
         .select('*')
@@ -761,7 +787,6 @@ export default function App() {
 
     loadData();
 
-    // Real-time subscriptions
     const apptChannel = supabase
       .channel('appointments')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: `user_id=eq.${user.id}` }, (payload) => {
@@ -863,6 +888,9 @@ export default function App() {
     let catCounts = { income: 0, supporting: 0, self_dev: 0, personal: 0 };
     let totalHours = 0;
     let metricTotals = { O: 0, P: 0, F: 0, R: 0 };
+    
+    const uniqueAppointments = [];
+    const processedIds = new Set();
 
     Object.values(appointments).forEach(appt => {
       if (appt.week_key === weekKey) {
@@ -870,7 +898,18 @@ export default function App() {
           catCounts[appt.category]++;
           totalHours++;
         }
+        
+        const listKey = `${appt.custom_id}-${appt.day_index}`;
+        if (!processedIds.has(listKey)) {
+          uniqueAppointments.push(appt);
+          processedIds.add(listKey);
+        }
       }
+    });
+    
+    uniqueAppointments.sort((a, b) => {
+      if (a.day_index !== b.day_index) return a.day_index - b.day_index;
+      return a.start_time.localeCompare(b.start_time);
     });
 
     Object.values(metrics).forEach(m => {
@@ -894,70 +933,128 @@ export default function App() {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Coach Overview - ${currentYear} ${weekKey}</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f5f5f7; padding: 20px; color: #1d1d1f; }
-    .container { max-width: 600px; margin: 0 auto; background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    h1 { color: #1d1d1f; margin-bottom: 4px; font-size: 24px; }
-    .subtitle { color: #86868b; font-size: 13px; margin-bottom: 24px; }
-    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
-    .metric-card { border: 1px solid #f0f0f0; border-radius: 12px; padding: 12px; text-align: center; }
-    .metric-label { color: #86868b; font-size: 10px; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
-    .metric-value { color: #1d1d1f; font-size: 28px; font-weight: 700; }
-    .section-title { color: #1d1d1f; font-size: 14px; font-weight: 600; margin-bottom: 12px; }
-    .bar-item { margin-bottom: 12px; }
-    .bar-header { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
-    .bar-bg { background: #f5f5f7; height: 8px; border-radius: 4px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 4px; }
-    .coach-box { background: #fbfbfd; border: 1px solid #f0f0f0; padding: 16px; border-radius: 12px; margin-top: 16px; }
-    .coach-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
-    .coach-content { line-height: 1.5; white-space: pre-line; font-size: 13px; color: #424245; }
-    .footer { margin-top: 24px; text-align: center; color: #86868b; font-size: 11px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f5f5f7; padding: 40px; color: #1d1d1f; }
+    .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+    h1 { color: #1d1d1f; margin-bottom: 5px; letter-spacing: -0.02em; }
+    .subtitle { color: #86868b; font-size: 14px; margin-bottom: 40px; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px; }
+    .metric-card { border: 1px solid #f0f0f0; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+    .metric-label { color: #86868b; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+    .metric-value { color: #1d1d1f; font-size: 36px; font-weight: 700; letter-spacing: -0.02em; }
+    .section-title { color: #1d1d1f; font-size: 16px; font-weight: 600; margin-bottom: 20px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-top: 40px; }
+    .bar-item { margin-bottom: 20px; }
+    .bar-header { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #1d1d1f; font-weight: 500; }
+    .bar-bg { background: #f5f5f7; height: 10px; border-radius: 5px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 5px; }
+    .coach-box { background: #fbfbfd; border: 1px solid #f0f0f0; padding: 30px; border-radius: 16px; color: #1d1d1f; margin-top: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+    .coach-title { font-weight: 600; font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; letter-spacing: -0.01em; }
+    .coach-content { line-height: 1.6; white-space: pre-line; font-size: 15px; color: #424245; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+    th { text-align: left; padding: 12px; border-bottom: 2px solid #e5e7eb; color: #6b7280; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
+    td { padding: 12px; border-bottom: 1px solid #f3f4f6; color: #374151; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+    .footer { margin-top: 50px; text-align: center; color: #86868b; font-size: 12px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Weekly Report</h1>
-    <p class="subtitle">${weekKey} | ${new Date().toLocaleDateString()}</p>
+    <h1>Weekly Performance Report</h1>
+    <p class="subtitle">Year: ${currentYear} | Week: ${weekKey} | Generated: ${new Date().toLocaleDateString()}</p>
+
+    <h3 class="section-title" style="margin-top: 0;">Sales Pipeline Metrics</h3>
     <div class="metrics-grid">
-      <div class="metric-card" style="background: #fff1f2;">
+      <div class="metric-card" style="background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); border: 1px solid #fecdd3; color: #be123c;">
         <div class="metric-label" style="color: #9f1239;">Open</div>
-        <div class="metric-value" style="color: #be123c;">${metricTotals.O}</div>
+        <div class="metric-value">${metricTotals.O}</div>
       </div>
-      <div class="metric-card" style="background: #f5f3ff;">
+      <div class="metric-card" style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 1px solid #ddd6fe; color: #6d28d9;">
         <div class="metric-label" style="color: #5b21b6;">Present</div>
-        <div class="metric-value" style="color: #6d28d9;">${metricTotals.P}</div>
+        <div class="metric-value">${metricTotals.P}</div>
       </div>
-      <div class="metric-card" style="background: #f0fdf4;">
+      <div class="metric-card" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0; color: #15803d;">
         <div class="metric-label" style="color: #166534;">Follow</div>
-        <div class="metric-value" style="color: #15803d;">${metricTotals.F}</div>
+        <div class="metric-value">${metricTotals.F}</div>
       </div>
-      <div class="metric-card" style="background: #fffbeb;">
+      <div class="metric-card" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #fde68a; color: #b45309;">
         <div class="metric-label" style="color: #92400e;">Close</div>
-        <div class="metric-value" style="color: #b45309;">${metricTotals.R}</div>
+        <div class="metric-value">${metricTotals.R}</div>
       </div>
     </div>
-    <div class="section-title">Time Distribution</div>
+    
+    <h3 class="section-title">Detailed Schedule</h3>
+    ${uniqueAppointments.length > 0 ? `
+    <table>
+      <thead>
+        <tr>
+          <th width="15%">Day / Date</th>
+          <th width="15%">Time</th>
+          <th width="15%">Category</th>
+          <th width="25%">Activity</th>
+          <th width="30%">Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${uniqueAppointments.map(appt => {
+          const dayName = DAYS[appt.day_index];
+          const dateStr = getDayDate(appt.day_index).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' });
+          
+          let badgeStyle = "background: #f3f4f6; color: #4b5563;";
+          if (appt.category === 'income') badgeStyle = "background: #d1fae5; color: #065f46;";
+          if (appt.category === 'supporting') badgeStyle = "background: #fef3c7; color: #92400e;";
+          if (appt.category === 'self_dev') badgeStyle = "background: #dbeafe; color: #1e40af;";
+          if (appt.category === 'personal') badgeStyle = "background: #ffe4e6; color: #9f1239;";
+
+          return `
+            <tr>
+              <td><strong>${dayName}</strong> <span style="color:#9ca3af; font-size:11px;">${dateStr}</span></td>
+              <td>${appt.start_time} - ${appt.end_time}</td>
+              <td><span class="tag" style="${badgeStyle}">${CATEGORIES[appt.category.toUpperCase()]?.label || appt.category}</span></td>
+              <td style="font-weight: 500;">${appt.activity_type}</td>
+              <td style="color: #6b7280; font-style: italic;">${appt.description || '-'}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+    ` : '<p style="color: #9ca3af; font-style: italic;">No activities scheduled for this week.</p>'}
+
+    <h3 class="section-title">Time Distribution</h3>
     ${Object.values(CATEGORIES).map(cat => {
       const count = catCounts[cat.id] || 0;
       const percent = getPercent(count);
       let colorHex = '#9ca3af'; 
-      if (cat.id === 'income') colorHex = '#10b981';
-      if (cat.id === 'supporting') colorHex = '#f59e0b';
-      if (cat.id === 'self_dev') colorHex = '#3b82f6';
-      if (cat.id === 'personal') colorHex = '#f43f5e';
-      return `<div class="bar-item">
-        <div class="bar-header"><strong>${cat.fullLabel}</strong><span>${count}h (${percent}%)</span></div>
-        <div class="bar-bg"><div class="bar-fill" style="width: ${percent}%; background-color: ${colorHex};"></div></div>
-      </div>`;
+      if (cat.id === 'income') colorHex = '#34C759';
+      if (cat.id === 'supporting') colorHex = '#FFD60A';
+      if (cat.id === 'self_dev') colorHex = '#007AFF';
+      if (cat.id === 'personal') colorHex = '#FF3B30';
+      
+      return `
+        <div class="bar-item">
+          <div class="bar-header">
+            <strong>${cat.fullLabel}</strong>
+            <span>${count} hrs (${percent}%)</span>
+          </div>
+          <div class="bar-bg">
+            <div class="bar-fill" style="width: ${percent}%; background-color: ${colorHex};"></div>
+          </div>
+        </div>
+      `;
     }).join('')}
+
+    <h3 class="section-title">Analysis & Feedback</h3>
+    
     <div class="coach-box">
-      <div class="coach-title">Coach Remarks</div>
+      <div class="coach-title" style="color: #FF9500;">📝 Coach Remarks</div>
       <div class="coach-content">${coachRemarksText}</div>
     </div>
-    <div class="coach-box" style="background: #eff6ff;">
-      <div class="coach-title" style="color: #2563eb;">AI Coach</div>
+    
+    <div class="coach-box" style="background: #F0F8FF; border-color: #E1F0FF;">
+      <div class="coach-title" style="color: #007AFF;">✨ AI Performance Coach</div>
       <div class="coach-content">${aiAnalysisText}</div>
     </div>
-    <div class="footer">Weekly Activity Planner</div>
+
+    <div class="footer">Generated by Weekly Activity Planner</div>
   </div>
 </body>
 </html>`;
@@ -966,12 +1063,11 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Report-${weekKey}.html`;
+    a.download = `Coach-Report-${weekKey}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    setShowMobileMenu(false);
   };
 
   const handlePrevWeek = () => {
@@ -1000,16 +1096,14 @@ export default function App() {
     setFormStartTime(formatTime(defaultStartHour, 0)); 
     setFormEndTime(formatTime(defaultEndHour, 0));
     setEditId(null);
-    setSelectedDayIndex(initialDayIndex);
+    setStartDayIndex(initialDayIndex);
+    setEndDayIndex(initialDayIndex);
     setIsModalOpen(true);
-    setShowMobileMenu(false);
   };
   
   const handleEditActivityClick = (dayIndex, hour) => {
     const key = `${weekKey}-${dayIndex}-${hour}`;
     const existing = appointments[key];
-    
-    setSelectedDayIndex(dayIndex); 
     
     if (existing) {
       setFormCategory(existing.category);
@@ -1017,7 +1111,12 @@ export default function App() {
       setFormDescription(existing.description || '');
       setFormStartTime(existing.start_time); 
       setFormEndTime(existing.end_time);
-      setEditId(existing.custom_id); 
+      setEditId(existing.custom_id);
+      
+      const related = Object.values(appointments).filter(a => a.custom_id === existing.custom_id && a.week_key === weekKey);
+      const dayIndices = related.map(a => a.day_index);
+      setStartDayIndex(Math.min(...dayIndices));
+      setEndDayIndex(Math.max(...dayIndices));
     } else {
       setFormCategory('income');
       setFormActivity(CATEGORIES.INCOME.activities[0]);
@@ -1025,6 +1124,8 @@ export default function App() {
       setFormStartTime(formatTime(hour, 0));
       setFormEndTime(formatTime(hour + 1, 0));
       setEditId(null);
+      setStartDayIndex(dayIndex);
+      setEndDayIndex(dayIndex);
     }
     
     setIsModalOpen(true);
@@ -1041,6 +1142,11 @@ export default function App() {
       return;
     }
     
+    if (endDayIndex < startDayIndex) {
+      alert("End day must be after or equal to start day.");
+      return;
+    }
+    
     const updateTime = new Date().toISOString();
 
     const startHourBlock = startObj.hour; 
@@ -1052,51 +1158,39 @@ export default function App() {
     const actualStartHourBlock = Math.max(startHourBlock, minHour);
     const actualEndHourBlock = Math.min(endHourBlock, maxHour);
 
-    const customId = editId || Date.now().toString(); 
+    const customId = editId || Date.now().toString();
     
-    // Delete old blocks if editing
     if (editId) {
-      const blocksToDelete = Object.keys(appointments).filter(key => {
-        const appt = appointments[key];
-        const isSameDay = appt.day_index === selectedDayIndex && appt.week_key === weekKey;
-        const isSameCustomId = appt.custom_id === editId; 
-        
-        if (isSameDay && isSameCustomId) {
-          const blockHour = appt.hour;
-          const isStillWithinRange = (blockHour >= actualStartHourBlock && blockHour < actualEndHourBlock);
-          return !isStillWithinRange;
-        }
-        return false;
-      });
-
+      const blocksToDelete = Object.keys(appointments).filter(key => appointments[key].custom_id === editId);
       for (const key of blocksToDelete) {
         await supabase.from('appointments').delete().eq('slot_key', key).eq('user_id', user.id);
       }
     }
 
-    // Save new blocks
-    for (let h = actualStartHourBlock; h < actualEndHourBlock; h++) {
-      const key = `${weekKey}-${selectedDayIndex}-${h}`;
-      
-      const blockData = {
-        user_id: user.id,
-        slot_key: key,
-        week_key: weekKey,
-        day_index: selectedDayIndex,
-        hour: h,
-        category: formCategory,
-        activity_type: formActivity,
-        description: formDescription,
-        start_time: formStartTime,
-        end_time: formEndTime,
-        custom_id: customId,
-        updated_at: updateTime
-      };
-      
-      try {
-        await supabase.from('appointments').upsert(blockData, { onConflict: 'user_id,slot_key' });
-      } catch (e) {
-        console.error("Error saving appt block:", e);
+    for (let d = startDayIndex; d <= endDayIndex; d++) {
+      for (let h = actualStartHourBlock; h < actualEndHourBlock; h++) {
+        const key = `${weekKey}-${d}-${h}`;
+        
+        const blockData = {
+          user_id: user.id,
+          slot_key: key,
+          week_key: weekKey,
+          day_index: d,
+          hour: h,
+          category: formCategory,
+          activity_type: formActivity,
+          description: formDescription,
+          start_time: formStartTime,
+          end_time: formEndTime,
+          custom_id: customId,
+          updated_at: updateTime
+        };
+        
+        try {
+          await supabase.from('appointments').upsert(blockData, { onConflict: 'user_id,slot_key' });
+        } catch (e) {
+          console.error("Error saving appt block:", e);
+        }
       }
     }
     
@@ -1236,12 +1330,15 @@ export default function App() {
     return (
       <div className="space-y-4">
         <TimeSelectionBlock 
-          initialDate={getDayDate(selectedDayIndex)} 
+          currentDate={currentDate}
+          startDayIndex={startDayIndex}
+          setStartDayIndex={setStartDayIndex}
+          endDayIndex={endDayIndex}
+          setEndDayIndex={setEndDayIndex}
           formStartTime={formStartTime}
           setFormStartTime={setFormStartTime}
           formEndTime={formEndTime}
           setFormEndTime={setFormEndTime}
-          setSelectedDayIndex={setSelectedDayIndex} 
         />
         
         <div>
@@ -1301,7 +1398,7 @@ export default function App() {
   }
 
   if (!user) {
-    return <LoginScreen onLogin={handleGoogleLogin} onGuest={handleGuestLogin} />;
+    return <LoginScreen onLogin={() => {}} />;
   }
 
   const getApptData = (dayIdx, hour) => {
@@ -1549,26 +1646,27 @@ export default function App() {
               const dayMetrics = metrics[dayKey] || { open_count: 0, present_count: 0, follow_count: 0, close_count: 0 };
               
               return (
-                <div key={idx} className="p-2 border-r border-slate-200 last:border-r-0">
+                <div key={idx} className="border-r border-slate-200 last:border-r-0 p-2 bg-white">
                   <div className="grid grid-cols-2 gap-1">
                     {['O', 'P', 'F', 'R'].map(metric => {
                       const config = {
-                        O: { color: 'text-pink-600', field: 'open_count' },
-                        P: { color: 'text-purple-600', field: 'present_count' },
-                        F: { color: 'text-emerald-600', field: 'follow_count' },
-                        R: { color: 'text-amber-600', field: 'close_count' }
+                        O: { label: 'O', bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200', field: 'open_count' },
+                        P: { label: 'P', bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200', field: 'present_count' },
+                        F: { label: 'F', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', field: 'follow_count' },
+                        R: { label: 'R', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', field: 'close_count' }
                       }[metric];
+                      
                       return (
-                        <div key={metric} className="flex items-center justify-between bg-white rounded px-1 py-0.5 border">
-                          <span className={`text-[9px] font-bold ${config.color}`}>{metric}</span>
-                          <div className="flex items-center gap-0.5">
+                        <div key={metric} className={`${config.bg} ${config.border} border rounded p-1 text-center`}>
+                          <div className={`text-[8px] font-bold ${config.text}`}>{config.label}</div>
+                          <div className="flex items-center justify-center gap-0.5">
                             <button 
-                              className="text-slate-400 hover:text-red-500 text-[10px]"
+                              className="text-slate-400 hover:text-red-600 text-[10px] font-bold"
                               onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, metric, -1); }}
                             >-</button>
-                            <span className="text-xs font-bold w-3 text-center">{dayMetrics[config.field] || 0}</span>
+                            <span className={`text-xs font-black ${config.text} w-4 text-center`}>{dayMetrics[config.field] || 0}</span>
                             <button 
-                              className="text-slate-400 hover:text-green-500 text-[10px]"
+                              className="text-slate-400 hover:text-green-600 text-[10px] font-bold"
                               onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, metric, 1); }}
                             >+</button>
                           </div>
@@ -1586,145 +1684,139 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col">
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-20">
-        <div className="px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen bg-slate-100 font-sans text-slate-900 flex flex-col">
+      <header className="sticky top-0 z-30 border-b border-gray-200/80 relative overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          {headerImage && (
+            <img 
+              src={headerImage} 
+              alt="Background" 
+              className="w-full h-full object-cover filter blur-xl scale-110 opacity-60" 
+            />
+          )}
+          <div className="absolute inset-0 bg-white/75 backdrop-blur-sm"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-              <Calendar className="text-white" size={18} />
-            </div>
-            <div className="hidden sm:block">
-              <h1 className="text-lg font-bold text-slate-900">Weekly Planner</h1>
-            </div>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Weekly Planner</h1>
           </div>
-
-          <div className="flex items-center gap-1 bg-slate-100 rounded-full p-1">
+          
+          <div className="flex flex-wrap justify-center sm:justify-end items-center gap-2 sm:gap-3">
             <button 
-              onClick={handlePrevWeek}
-              className="p-2 hover:bg-white rounded-full transition-colors active:scale-95"
+              onClick={handleNewActivityClick}
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-emerald-500 text-white rounded-full hover:bg-emerald-600 transition-all text-sm font-bold shadow-md active:scale-95"
             >
-              <ChevronLeft size={18} className="text-slate-600" />
-            </button>
-            <span className="px-3 text-sm font-bold text-slate-800 min-w-[100px] text-center">
-              {weekKey}
-            </span>
-            <button 
-              onClick={handleNextWeek}
-              className="p-2 hover:bg-white rounded-full transition-colors active:scale-95"
-            >
-              <ChevronRight size={18} className="text-slate-600" />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setIsOverviewOpen(true)}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-full text-sm font-bold hover:bg-blue-600 transition-all active:scale-95"
-            >
-              <Sparkles size={16} />
-              <span>Overview</span>
+              <Plus size={16} strokeWidth={3} />
+              <span className="hidden sm:inline">New Activity</span>
+              <span className="inline sm:hidden">New</span>
             </button>
             
             <button 
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="p-2 hover:bg-slate-100 rounded-full transition-colors md:hidden"
+              onClick={() => setIsOverviewOpen(true)}
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all text-sm font-bold shadow-md active:scale-95"
             >
-              <Menu size={22} className="text-slate-700" />
+              <Sparkles size={16} strokeWidth={2.5} />
+              <span>Coach</span>
             </button>
 
-            <div className="hidden md:flex items-center gap-2">
-              <button 
-                onClick={handleExportHtml}
-                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                title="Export Report"
-              >
-                <Download size={20} className="text-slate-600" />
-              </button>
+            <button 
+              onClick={handleExportHtml}
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-slate-900 text-white rounded-full hover:bg-black transition-all text-sm font-bold shadow-md active:scale-95"
+              title="Download Report"
+            >
+              <Download size={16} strokeWidth={2.5} />
+              <span className="hidden sm:inline">Export</span>
+            </button>
+              
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/80 backdrop-blur-sm rounded-full border border-slate-300 shadow-sm">
+              {user.user_metadata?.avatar_url ? (
+                <img src={user.user_metadata.avatar_url} alt="Profile" className="w-6 h-6 rounded-full ring-2 ring-white" />
+              ) : (
+                <User size={16} className="text-slate-600" />
+              )}
+              <span className="text-xs font-bold max-w-[60px] sm:max-w-[80px] truncate hidden sm:inline text-slate-800">
+                {user.email?.split('@')[0] || "User"}
+              </span>
               <button 
                 onClick={handleLogout}
-                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                title="Logout"
+                className="p-1 hover:bg-slate-200 rounded-full text-slate-600 transition-colors"
+                title="Log Out"
               >
-                <LogOut size={20} className="text-slate-600" />
+                <LogOut size={14} />
               </button>
             </div>
           </div>
         </div>
-
-        {showMobileMenu && (
-          <div className="absolute top-full left-0 right-0 bg-white border-b border-slate-200 shadow-lg z-30 p-4 space-y-2 md:hidden">
-            <button 
-              onClick={() => { setIsOverviewOpen(true); setShowMobileMenu(false); }}
-              className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl transition-colors"
-            >
-              <Sparkles size={20} className="text-blue-500" />
-              <span className="font-semibold text-slate-800">Weekly Overview</span>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-4 flex justify-center sm:justify-start relative z-10">
+          <div className="flex items-center bg-white/80 rounded-full p-1 border border-slate-300 shadow-sm">
+            <button onClick={handlePrevWeek} className="p-2 hover:bg-white rounded-full transition-all text-slate-600 hover:text-black">
+              <ChevronLeft size={18} strokeWidth={3} />
             </button>
-            <button 
-              onClick={handleExportHtml}
-              className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl transition-colors"
-            >
-              <Download size={20} className="text-slate-600" />
-              <span className="font-semibold text-slate-800">Export Report</span>
-            </button>
-            <button 
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 rounded-xl transition-colors text-red-600"
-            >
-              <LogOut size={20} />
-              <span className="font-semibold">Logout</span>
+            <div className="px-4 sm:px-6 font-bold text-sm w-40 sm:w-48 text-center text-slate-900">
+              <span className="block text-xs text-slate-500 uppercase tracking-widest mb-0.5 font-extrabold">{currentYear}</span>
+              {getDayDate(0).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {' '}
+              {getDayDate(6).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </div>
+            <button onClick={handleNextWeek} className="p-2 hover:bg-white rounded-full transition-all text-slate-600 hover:text-black">
+              <ChevronRight size={18} strokeWidth={3} />
             </button>
           </div>
-        )}
+        </div>
       </header>
 
       <MobileDaySelector mobileDay={mobileDay} setMobileDay={setMobileDay} getDayDate={getDayDate} />
 
-      <div className="hidden md:flex flex-1 flex-col">
-        {renderDesktopGridView()}
-      </div>
-
-      <div className="md:hidden flex-1 flex flex-col">
-        {renderMobileDayView()}
-      </div>
-
-      <button
-        onClick={handleNewActivityClick}
-        className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform z-10"
-      >
-        <Plus size={28} />
-      </button>
-
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editId ? "Edit Activity" : "New Activity"}>
-        {renderCategorySelect()}
-        <div className="flex gap-3 mt-6">
-          {editId && (
-            <button 
-              onClick={handleDeleteAppointment}
-              className="flex-1 py-3 border-2 border-red-200 text-red-600 rounded-xl text-sm font-bold hover:bg-red-50 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              <Trash2 size={16} /> Delete
-            </button>
-          )}
-          <button 
-            onClick={handleSaveAppointment}
-            className="flex-1 py-3 bg-blue-500 text-white rounded-xl text-sm font-bold hover:bg-blue-600 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-          >
-            <Save size={16} /> Save
-          </button>
+      <main className="flex-1 flex flex-col md:block">
+        <div className="md:hidden flex-1 flex flex-col">
+          {renderMobileDayView()}
         </div>
-      </Modal>
+        <div className="hidden md:block">
+          {renderDesktopGridView()}
+        </div>
+      </main>
 
       <OverviewModal 
-        isOpen={isOverviewOpen} 
+        isOpen={isOverviewOpen}
         onClose={() => setIsOverviewOpen(false)}
         appointments={appointments}
         metrics={metrics}
         weekKey={weekKey}
         weeklyOverviewDoc={weeklyOverviews[weekKey]}
-        onRemarksChange={(val) => handleSaveOverviewField('remarks', val)}
-        onAiAnalyze={(val) => handleSaveOverviewField('aiAnalysis', val)}
+        onRemarksChange={(remarks) => handleSaveOverviewField('remarks', remarks)}
+        onAiAnalyze={(analysis) => handleSaveOverviewField('aiAnalysis', analysis)}
+        getDayDate={getDayDate}
       />
+
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title={editId ? "Edit Activity" : "New Activity"}
+      >
+        <div className="space-y-4">
+          {renderCategorySelect()}
+        </div>
+        
+        <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-200">
+          {editId && (
+            <button
+              onClick={handleDeleteAppointment}
+              className="flex items-center gap-2 px-4 py-2.5 text-rose-600 hover:bg-rose-50 rounded-full text-sm font-bold transition-colors"
+            >
+              <Trash2 size={16} />
+              Delete
+            </button>
+          )}
+          <button
+            onClick={handleSaveAppointment}
+            className="flex items-center gap-2 px-6 py-2.5 bg-blue-500 text-white rounded-full text-sm font-bold hover:bg-blue-600 shadow-md hover:shadow-lg transition-all active:scale-95"
+          >
+            <Save size={16} />
+            {editId ? "Update" : "Save"}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
