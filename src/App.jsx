@@ -1766,15 +1766,8 @@ export default function App() {
         </div>
       </header>
 
-      <MobileDaySelector mobileDay={mobileDay} setMobileDay={setMobileDay} getDayDate={getDayDate} />
-
-      <main className="flex-1 flex flex-col md:block">
-        <div className="md:hidden flex-1 flex flex-col">
-          {renderMobileDayView()}
-        </div>
-        <div className="hidden md:block">
-          {renderDesktopGridView()}
-        </div>
+      <main className="flex-1 overflow-auto">
+        {renderDesktopGridView()}
       </main>
 
       <OverviewModal 
