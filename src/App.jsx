@@ -131,20 +131,48 @@ const CATEGORIES = {
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 7);
 
-const Modal = ({ isOpen, onClose, title, children }) => {
+const Modal = ({ isOpen, onClose, title, children, showActivityReference = false, onSelectActivity, selectedCategory }) => {
   if (!isOpen) return null;
   
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
-      <div className="bg-white w-full max-h-[90vh] sm:max-w-md sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col ring-1 ring-black/10">
+      <div className="bg-white w-full max-h-[90vh] sm:max-w-2xl sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col ring-1 ring-black/10">
         <div className="px-4 sm:px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 flex-shrink-0">
           <h3 className="text-lg sm:text-xl font-bold tracking-tight text-slate-800">{title}</h3>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-500 transition-colors active:scale-95">
             <X size={20} />
           </button>
         </div>
-        <div className="p-4 sm:p-6 overflow-y-auto flex-1">
-          {children}
+        <div className="flex flex-col sm:flex-row overflow-hidden flex-1">
+          <div className="p-4 sm:p-6 overflow-y-auto flex-1 sm:w-1/2">
+            {children}
+          </div>
+          {showActivityReference && (
+            <div className="border-t sm:border-t-0 sm:border-l border-slate-200 p-4 overflow-y-auto sm:w-1/2 bg-slate-50 max-h-[40vh] sm:max-h-none">
+              <h4 className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">Activity Reference</h4>
+              <div className="space-y-3">
+                {Object.values(CATEGORIES).map(cat => (
+                  <div 
+                    key={cat.id} 
+                    className={`rounded-xl p-2 border-2 ${cat.id === selectedCategory ? cat.activeColor : cat.color}`}
+                  >
+                    <h5 className="text-[10px] font-black uppercase tracking-wide mb-1.5">{cat.fullLabel}</h5>
+                    <ul className="space-y-0.5">
+                      {cat.activities.map((act, idx) => (
+                        <li 
+                          key={idx} 
+                          onClick={() => onSelectActivity && onSelectActivity(cat.id, act)}
+                          className="text-[10px] font-medium leading-tight cursor-pointer hover:bg-white/50 rounded px-1 py-0.5 transition-colors"
+                        >
+                          {act}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1978,6 +2006,12 @@ export default function App() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         title={editId ? "Edit Activity" : "New Activity"}
+        showActivityReference={true}
+        selectedCategory={formCategory}
+        onSelectActivity={(catId, activity) => {
+          setFormCategory(catId);
+          setFormActivity(activity);
+        }}
       >
         <div className="space-y-4">
           {renderCategorySelect()}
