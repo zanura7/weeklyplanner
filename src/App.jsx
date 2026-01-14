@@ -1632,10 +1632,48 @@ export default function App() {
             ))}
           </div>
 
-          {/* MFI FRIEN Section - Metrics Row */}
-          <div className="grid grid-cols-8 border-b border-slate-300 bg-slate-50">
-            <div className="p-2 text-xs font-bold text-blue-700 text-center border-r border-slate-200 flex items-center justify-center bg-blue-50">
-              MFI FRIEN
+          {HOURS.map((hour, hourIndex) => (
+            <div key={hour} className={`grid grid-cols-8 border-b border-slate-200 last:border-b-0 min-h-[60px] ${hourIndex % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
+              <div className={`border-r border-slate-200 text-xs font-bold text-slate-500 flex items-center justify-center ${hourIndex % 2 === 0 ? 'bg-slate-100' : 'bg-slate-50'}`}>
+                {hour}:00
+              </div>
+              {DAYS.map((_, dayIdx) => {
+                const { isSet, data: appt, categoryData, isFirstBlock } = getApptData(dayIdx, hour);
+                
+                return (
+                  <div 
+                    key={dayIdx}
+                    onClick={() => handleEditActivityClick(dayIdx, hour)}
+                    className={`border-r border-slate-200 last:border-r-0 cursor-pointer transition-colors group ${
+                      isSet ? categoryData?.color : hourIndex % 2 === 0 ? 'hover:bg-slate-100' : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    {isSet ? (
+                      <div className="p-1.5 h-full">
+                        {isFirstBlock && (
+                          <>
+                            <div className="text-[10px] font-bold opacity-70">{appt.start_time}-{appt.end_time}</div>
+                            <div className="text-xs font-bold leading-tight truncate">
+                              {appt.description || appt.activity_type.split('.')[1]?.trim() || appt.activity_type}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="h-full flex items-center justify-center opacity-0 group-hover:opacity-100">
+                        <Plus size={14} className="text-slate-400" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+
+          {/* METRICS Section - At Bottom after Time Grid */}
+          <div className="grid grid-cols-8 border-t-2 border-slate-300 bg-slate-50">
+            <div className="p-2 text-xs font-bold text-slate-700 text-center border-r border-slate-200 flex items-center justify-center bg-slate-100">
+              METRICS
             </div>
             {DAYS.map((_, idx) => {
               const dayKey = `${weekKey}-${idx}`;
@@ -1659,9 +1697,9 @@ export default function App() {
                         >+</button>
                       </div>
                     </div>
-                    {/* FIRS/PRESENT */}
+                    {/* PRESENT */}
                     <div className="bg-purple-50 border border-purple-200 rounded p-1 text-center">
-                      <div className="text-[8px] font-bold text-purple-600 uppercase">Firs</div>
+                      <div className="text-[8px] font-bold text-purple-600 uppercase">Present</div>
                       <div className="flex items-center justify-center gap-0.5">
                         <button 
                           className="text-slate-400 hover:text-red-600 text-[10px] font-bold"
@@ -1711,44 +1749,6 @@ export default function App() {
               );
             })}
           </div>
-
-          {HOURS.map((hour, hourIndex) => (
-            <div key={hour} className={`grid grid-cols-8 border-b border-slate-200 last:border-b-0 min-h-[60px] ${hourIndex % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
-              <div className={`border-r border-slate-200 text-xs font-bold text-slate-500 flex items-center justify-center ${hourIndex % 2 === 0 ? 'bg-slate-100' : 'bg-slate-50'}`}>
-                {hour}:00
-              </div>
-              {DAYS.map((_, dayIdx) => {
-                const { isSet, data: appt, categoryData, isFirstBlock } = getApptData(dayIdx, hour);
-                
-                return (
-                  <div 
-                    key={dayIdx}
-                    onClick={() => handleEditActivityClick(dayIdx, hour)}
-                    className={`border-r border-slate-200 last:border-r-0 cursor-pointer transition-colors group ${
-                      isSet ? categoryData?.color : hourIndex % 2 === 0 ? 'hover:bg-slate-100' : 'hover:bg-slate-50'
-                    }`}
-                  >
-                    {isSet ? (
-                      <div className="p-1.5 h-full">
-                        {isFirstBlock && (
-                          <>
-                            <div className="text-[10px] font-bold opacity-70">{appt.start_time}-{appt.end_time}</div>
-                            <div className="text-xs font-bold leading-tight truncate">
-                              {appt.description || appt.activity_type.split('.')[1]?.trim() || appt.activity_type}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="h-full flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <Plus size={14} className="text-slate-400" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
 
         </div>
 
