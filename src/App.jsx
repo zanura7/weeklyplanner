@@ -20,39 +20,49 @@ const HEADER_IMAGES = [
   "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&q=80&w=2000"
 ];
 
-const generateGeminiResponse = async (prompt, systemInstruction = "") => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const generateOpenRouterResponse = async (prompt, systemInstruction = "") => {
+  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
   if (!apiKey) {
-    console.warn("Gemini API key not configured");
+    console.warn("OpenRouter API key not configured");
     return null;
   }
   
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-  const payload = {
-    contents: [{ parts: [{ text: prompt }] }],
-    systemInstruction: { parts: [{ text: systemInstruction }] }
-  };
+  const messages = [];
+  if (systemInstruction) {
+    messages.push({ role: "system", content: systemInstruction });
+  }
+  messages.push({ role: "user", content: prompt });
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'Weekly Activity Planner'
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.0-flash-001",
+        messages: messages
+      })
     });
     
     if (!response.ok) {
-      console.error("Gemini API Error Status:", response.status, response.statusText);
+      console.error("OpenRouter API Error Status:", response.status, response.statusText);
       return null;
     }
     
     const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+    return data.choices?.[0]?.message?.content || null;
   } catch (error) {
-    console.error("Gemini generation failed:", error);
+    console.error("OpenRouter generation failed:", error);
     return null;
   }
 };
+
+// Alias for backward compatibility
+const generateGeminiResponse = generateOpenRouterResponse;
 
 const CATEGORIES = {
   INCOME: {
