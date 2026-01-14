@@ -302,7 +302,7 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
     if (!isOpen) return { catCounts, totalHours, metricTotals };
 
     Object.values(appointments).forEach(appt => {
-      if (appt.week_key === weekKey) {
+      if (appt.week === weekKey) {
         if (catCounts[appt.category] !== undefined) {
           catCounts[appt.category]++;
           totalHours++;
@@ -311,12 +311,10 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
     });
 
     Object.values(metrics).forEach(m => {
-      if (m.week_key === weekKey) {
-        metricTotals.O += m.open_count || 0;
-        metricTotals.P += m.present_count || 0;
-        metricTotals.F += m.follow_count || 0;
-        metricTotals.R += m.close_count || 0;
-      }
+      metricTotals.O += m.O || 0;
+      metricTotals.P += m.P || 0;
+      metricTotals.F += m.F || 0;
+      metricTotals.R += m.R || 0;
     });
 
     return { catCounts, totalHours, metricTotals };
@@ -779,7 +777,21 @@ export default function App() {
       
       if (apptData) {
         const apptObj = {};
-        apptData.forEach(a => { apptObj[a.slot_key] = a; });
+        apptData.forEach(a => { 
+          const key = a.slot_key;
+          apptObj[key] = {
+            category: a.category,
+            activityType: a.activity_type,
+            description: a.description,
+            startTime: a.start_time,
+            endTime: a.end_time,
+            week: a.week_key,
+            dayIndex: a.day_index,
+            hour: a.hour,
+            customId: a.custom_id,
+            lastUpdated: a.updated_at
+          };
+        });
         setAppointments(apptObj);
       }
 
@@ -801,7 +813,15 @@ export default function App() {
       
       if (metricData) {
         const metricObj = {};
-        metricData.forEach(m => { metricObj[m.day_key] = m; });
+        metricData.forEach(m => { 
+          metricObj[m.day_key] = { 
+            O: m.open_count || 0, 
+            P: m.present_count || 0, 
+            F: m.follow_count || 0, 
+            R: m.close_count || 0,
+            lastUpdated: m.updated_at
+          }; 
+        });
         setMetrics(metricObj);
       }
 
@@ -812,7 +832,14 @@ export default function App() {
       
       if (overviewData) {
         const overviewObj = {};
-        overviewData.forEach(o => { overviewObj[o.week_key] = o; });
+        overviewData.forEach(o => { 
+          overviewObj[o.week_key] = {
+            remarks: o.remarks,
+            aiAnalysis: o.ai_analysis,
+            analysisGeneratedTimestamp: o.analysis_generated_at,
+            lastUpdated: o.updated_at
+          }; 
+        });
         setWeeklyOverviews(overviewObj);
       }
     };
@@ -829,7 +856,22 @@ export default function App() {
             return newAppts;
           });
         } else {
-          setAppointments(prev => ({ ...prev, [payload.new.slot_key]: payload.new }));
+          const a = payload.new;
+          setAppointments(prev => ({ 
+            ...prev, 
+            [a.slot_key]: {
+              category: a.category,
+              activityType: a.activity_type,
+              description: a.description,
+              startTime: a.start_time,
+              endTime: a.end_time,
+              week: a.week_key,
+              dayIndex: a.day_index,
+              hour: a.hour,
+              customId: a.custom_id,
+              lastUpdated: a.updated_at
+            }
+          }));
         }
       })
       .subscribe();
@@ -859,7 +901,17 @@ export default function App() {
             return newMetrics;
           });
         } else {
-          setMetrics(prev => ({ ...prev, [payload.new.day_key]: payload.new }));
+          const m = payload.new;
+          setMetrics(prev => ({ 
+            ...prev, 
+            [m.day_key]: { 
+              O: m.open_count || 0, 
+              P: m.present_count || 0, 
+              F: m.follow_count || 0, 
+              R: m.close_count || 0,
+              lastUpdated: m.updated_at
+            } 
+          }));
         }
       })
       .subscribe();
@@ -874,7 +926,16 @@ export default function App() {
             return newOverviews;
           });
         } else {
-          setWeeklyOverviews(prev => ({ ...prev, [payload.new.week_key]: payload.new }));
+          const o = payload.new;
+          setWeeklyOverviews(prev => ({ 
+            ...prev, 
+            [o.week_key]: {
+              remarks: o.remarks,
+              aiAnalysis: o.ai_analysis,
+              analysisGeneratedTimestamp: o.analysis_generated_at,
+              lastUpdated: o.updated_at
+            }
+          }));
         }
       })
       .subscribe();
@@ -925,13 +986,13 @@ export default function App() {
     const processedIds = new Set();
 
     Object.values(appointments).forEach(appt => {
-      if (appt.week_key === weekKey) {
+      if (appt.week === weekKey) {
         if (catCounts[appt.category] !== undefined) {
           catCounts[appt.category]++;
           totalHours++;
         }
         
-        const listKey = `${appt.custom_id}-${appt.day_index}`;
+        const listKey = `${appt.customId}-${appt.dayIndex}`;
         if (!processedIds.has(listKey)) {
           uniqueAppointments.push(appt);
           processedIds.add(listKey);
@@ -940,17 +1001,15 @@ export default function App() {
     });
     
     uniqueAppointments.sort((a, b) => {
-      if (a.day_index !== b.day_index) return a.day_index - b.day_index;
-      return a.start_time.localeCompare(b.start_time);
+      if (a.dayIndex !== b.dayIndex) return a.dayIndex - b.dayIndex;
+      return a.startTime.localeCompare(b.startTime);
     });
 
     Object.values(metrics).forEach(m => {
-      if (m.week_key === weekKey) {
-        metricTotals.O += m.open_count || 0;
-        metricTotals.P += m.present_count || 0;
-        metricTotals.F += m.follow_count || 0;
-        metricTotals.R += m.close_count || 0;
-      }
+      metricTotals.O += m.O || 0;
+      metricTotals.P += m.P || 0;
+      metricTotals.F += m.F || 0;
+      metricTotals.R += m.R || 0;
     });
 
     const getPercent = (count) => totalHours > 0 ? Math.round((count / totalHours) * 100) : 0;
@@ -1028,8 +1087,8 @@ export default function App() {
       </thead>
       <tbody>
         ${uniqueAppointments.map(appt => {
-          const dayName = DAYS[appt.day_index];
-          const dateStr = getDayDate(appt.day_index).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' });
+          const dayName = DAYS[appt.dayIndex];
+          const dateStr = getDayDate(appt.dayIndex).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' });
           
           let badgeStyle = "background: #f3f4f6; color: #4b5563;";
           if (appt.category === 'income') badgeStyle = "background: #d1fae5; color: #065f46;";
@@ -1040,9 +1099,9 @@ export default function App() {
           return `
             <tr>
               <td><strong>${dayName}</strong> <span style="color:#9ca3af; font-size:11px;">${dateStr}</span></td>
-              <td>${appt.start_time} - ${appt.end_time}</td>
+              <td>${appt.startTime} - ${appt.endTime}</td>
               <td><span class="tag" style="${badgeStyle}">${CATEGORIES[appt.category.toUpperCase()]?.label || appt.category}</span></td>
-              <td style="font-weight: 500;">${appt.activity_type}</td>
+              <td style="font-weight: 500;">${appt.activityType}</td>
               <td style="color: #6b7280; font-style: italic;">${appt.description || '-'}</td>
             </tr>
           `;
@@ -1139,14 +1198,14 @@ export default function App() {
     
     if (existing) {
       setFormCategory(existing.category);
-      setFormActivity(existing.activity_type);
+      setFormActivity(existing.activityType);
       setFormDescription(existing.description || '');
-      setFormStartTime(existing.start_time); 
-      setFormEndTime(existing.end_time);
-      setEditId(existing.custom_id);
+      setFormStartTime(existing.startTime); 
+      setFormEndTime(existing.endTime);
+      setEditId(existing.customId);
       
-      const related = Object.values(appointments).filter(a => a.custom_id === existing.custom_id && a.week_key === weekKey);
-      const dayIndices = related.map(a => a.day_index);
+      const related = Object.values(appointments).filter(a => a.customId === existing.customId && a.week === weekKey);
+      const dayIndices = related.map(a => a.dayIndex);
       setStartDayIndex(Math.min(...dayIndices));
       setEndDayIndex(Math.max(...dayIndices));
     } else {
@@ -1170,12 +1229,12 @@ export default function App() {
     const endObj = parseTime(formEndTime);
     
     if (endObj.hour < startObj.hour || (endObj.hour === startObj.hour && endObj.minute <= startObj.minute)) {
-      alert("End time must be after start time.");
+      alert("Error: End time must be after the start time.");
       return;
     }
     
     if (endDayIndex < startDayIndex) {
-      alert("End day must be after or equal to start day.");
+      alert("Error: End day must be after or equal to start day.");
       return;
     }
     
@@ -1190,26 +1249,55 @@ export default function App() {
     const actualStartHourBlock = Math.max(startHourBlock, minHour);
     const actualEndHourBlock = Math.min(endHourBlock, maxHour);
 
+    const newApptData = {
+      category: formCategory,
+      activityType: formActivity,
+      description: formDescription,
+      startTime: formStartTime,
+      endTime: formEndTime,
+      week: weekKey,
+      lastUpdated: updateTime,
+    };
+    
     const customId = editId || Date.now().toString();
     
-    // Optimistic update: prepare new appointments object
     const newAppointments = { ...appointments };
-    
-    // Delete old blocks if editing
+
+    // 1. If editing, DELETE ALL old blocks with this customId first
     if (editId) {
-      const blocksToDelete = Object.keys(appointments).filter(key => appointments[key].custom_id === editId);
+      const blocksToDelete = Object.keys(appointments).filter(key => appointments[key].customId === editId);
       for (const key of blocksToDelete) {
         delete newAppointments[key];
-        supabase.from('appointments').delete().eq('slot_key', key).eq('user_id', user.id);
+      }
+      
+      // Delete from database first
+      const { error: deleteError } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('custom_id', editId);
+      
+      if (deleteError) {
+        console.error("Error deleting old blocks:", deleteError);
+        return;
       }
     }
 
-    // Create new blocks
+    // 2. Create new blocks for ALL days in range
+    const newBlocks = [];
     for (let d = startDayIndex; d <= endDayIndex; d++) {
       for (let h = actualStartHourBlock; h < actualEndHourBlock; h++) {
         const key = `${weekKey}-${d}-${h}`;
         
         const blockData = {
+          ...newApptData,
+          dayIndex: d,
+          customId: customId,
+          hour: h,
+        };
+        
+        // Database format
+        const dbBlockData = {
           user_id: user.id,
           slot_key: key,
           week_key: weekKey,
@@ -1224,16 +1312,22 @@ export default function App() {
           updated_at: updateTime
         };
         
-        // Optimistic update
+        newBlocks.push(dbBlockData);
         newAppointments[key] = blockData;
-        
-        // Save to database (fire and forget)
-        supabase.from('appointments').upsert(blockData, { onConflict: 'user_id,slot_key' })
-          .then(({ error }) => { if (error) console.error("Error saving appt block:", error); });
       }
     }
     
-    // Update state immediately
+    // Insert all new blocks
+    const { error: insertError } = await supabase
+      .from('appointments')
+      .upsert(newBlocks, { onConflict: 'user_id,slot_key' });
+    
+    if (insertError) {
+      console.error("Error saving appointments:", insertError);
+      return;
+    }
+    
+    // Update state after successful database operation
     setAppointments(newAppointments);
     setIsModalOpen(false);
   };
@@ -1241,14 +1335,24 @@ export default function App() {
   const handleDeleteAppointment = async () => {
     if (!editId || !user) return;
     
-    const blocksToDelete = Object.keys(appointments).filter(key => appointments[key].custom_id === editId);
+    // Delete from database first
+    const { error } = await supabase
+      .from('appointments')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('custom_id', editId);
     
-    // Optimistic update: remove from local state immediately
+    if (error) {
+      console.error("Error deleting appointment:", error);
+      return;
+    }
+    
+    // Update local state after successful database deletion
+    const blocksToDelete = Object.keys(appointments).filter(key => appointments[key].customId === editId);
     const newAppointments = { ...appointments };
+    
     for (const key of blocksToDelete) {
       delete newAppointments[key];
-      // Delete from database (fire and forget)
-      supabase.from('appointments').delete().eq('slot_key', key).eq('user_id', user.id);
     }
     
     setAppointments(newAppointments);
@@ -1346,12 +1450,11 @@ export default function App() {
     if (!user) return;
     const key = `${weekKey}-${dayIndex}`;
     
-    const currentMetrics = metrics[key] || { open_count: 0, present_count: 0, follow_count: 0, close_count: 0 };
-    const metricFieldMap = { O: 'open_count', P: 'present_count', F: 'follow_count', R: 'close_count' };
-    const field = metricFieldMap[metric];
+    const currentMetrics = metrics[key] || { O: 0, P: 0, F: 0, R: 0 };
+    const newVal = Math.max(0, (currentMetrics[metric] || 0) + delta);
+    const newMetricsObj = { ...currentMetrics, [metric]: newVal };
     
-    const newVal = Math.max(0, (currentMetrics[field] || 0) + delta);
-    const newMetricsObj = { ...currentMetrics, [field]: newVal };
+    const updateTime = new Date().toISOString();
 
     setMetrics(prev => ({ ...prev, [key]: newMetricsObj }));
 
@@ -1361,11 +1464,11 @@ export default function App() {
         day_key: key,
         week_key: weekKey,
         day_index: dayIndex,
-        open_count: newMetricsObj.open_count || 0,
-        present_count: newMetricsObj.present_count || 0,
-        follow_count: newMetricsObj.follow_count || 0,
-        close_count: newMetricsObj.close_count || 0,
-        updated_at: new Date().toISOString()
+        open_count: newMetricsObj.O || 0,
+        present_count: newMetricsObj.P || 0,
+        follow_count: newMetricsObj.F || 0,
+        close_count: newMetricsObj.R || 0,
+        updated_at: updateTime
       }, { onConflict: 'user_id,day_key' });
     } catch (e) {
       console.error("Error saving metric:", e);
@@ -1456,13 +1559,13 @@ export default function App() {
     const categoryData = Object.values(CATEGORIES).find(c => c.id === appt.category);
     
     const isFirstBlock = (() => {
-      const apptStartTimeHour = parseTime(appt.start_time).hour;
+      const apptStartTimeHour = parseTime(appt.startTime).hour;
       if (hour === apptStartTimeHour) return true;
       
       const prevKey = `${weekKey}-${dayIdx}-${hour - 1}`;
       const prevAppt = appointments[prevKey];
       
-      return !prevAppt || prevAppt.custom_id !== appt.custom_id;
+      return !prevAppt || prevAppt.customId !== appt.customId;
     })();
     
     return { isSet: true, data: appt, categoryData, isFirstBlock };
@@ -1471,7 +1574,7 @@ export default function App() {
   const renderMobileDayView = () => {
     const dayIdx = mobileDay;
     const dayKey = `${weekKey}-${dayIdx}`;
-    const dayMetrics = metrics[dayKey] || { open_count: 0, present_count: 0, follow_count: 0, close_count: 0 };
+    const dayMetrics = metrics[dayKey] || { O: 0, P: 0, F: 0, R: 0 };
 
     return (
       <div className="flex-1 overflow-y-auto pb-20">
@@ -1518,10 +1621,10 @@ export default function App() {
           <div className="grid grid-cols-4 gap-2">
             {['O', 'P', 'F', 'R'].map(metric => {
               const config = {
-                O: { label: 'Open', bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200', field: 'open_count' },
-                P: { label: 'Present', bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200', field: 'present_count' },
-                F: { label: 'Follow', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', field: 'follow_count' },
-                R: { label: 'Close', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', field: 'close_count' }
+                O: { label: 'Open', bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
+                P: { label: 'Present', bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
+                F: { label: 'Follow', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+                R: { label: 'Close', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' }
               }[metric];
               
               return (
@@ -1532,7 +1635,7 @@ export default function App() {
                       className="w-6 h-6 rounded-full bg-white border border-slate-200 text-slate-600 font-bold text-sm active:scale-90"
                       onClick={() => handleMetricChange(dayIdx, metric, -1)}
                     >-</button>
-                    <span className={`text-xl font-black ${config.text} w-8`}>{dayMetrics[config.field] || 0}</span>
+                    <span className={`text-xl font-black ${config.text} w-8`}>{dayMetrics[metric] || 0}</span>
                     <button 
                       className="w-6 h-6 rounded-full bg-white border border-slate-200 text-slate-600 font-bold text-sm active:scale-90"
                       onClick={() => handleMetricChange(dayIdx, metric, 1)}
@@ -1567,10 +1670,10 @@ export default function App() {
                     {isSet && isFirstBlock ? (
                       <>
                         <div className="text-sm font-bold leading-tight">
-                          {appt.description || appt.activity_type}
+                          {appt.description || appt.activityType}
                         </div>
                         <div className="text-xs opacity-70 mt-0.5">
-                          {appt.start_time} - {appt.end_time}
+                          {appt.startTime} - {appt.endTime}
                         </div>
                       </>
                     ) : isSet ? (
@@ -1666,9 +1769,9 @@ export default function App() {
                       <div className="p-1.5 h-full">
                         {isFirstBlock && (
                           <>
-                            <div className="text-[10px] font-bold opacity-70">{appt.start_time}-{appt.end_time}</div>
+                            <div className="text-[10px] font-bold opacity-70">{appt.startTime}-{appt.endTime}</div>
                             <div className="text-xs font-bold leading-tight truncate">
-                              {appt.description || appt.activity_type.split('.')[1]?.trim() || appt.activity_type}
+                              {appt.description || appt.activityType.split('.')[1]?.trim() || appt.activityType}
                             </div>
                           </>
                         )}
@@ -1691,7 +1794,7 @@ export default function App() {
             </div>
             {DAYS.map((_, idx) => {
               const dayKey = `${weekKey}-${idx}`;
-              const dayMetrics = metrics[dayKey] || { open_count: 0, present_count: 0, follow_count: 0, close_count: 0 };
+              const dayMetrics = metrics[dayKey] || { O: 0, P: 0, F: 0, R: 0 };
               
               return (
                 <div key={idx} className="border-r border-slate-200 last:border-r-0 p-2 bg-white">
@@ -1704,7 +1807,7 @@ export default function App() {
                           className="text-slate-400 hover:text-red-600 text-[10px] font-bold"
                           onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'O', -1); }}
                         >-</button>
-                        <span className="text-sm font-black text-pink-700 w-5 text-center">{dayMetrics.open_count || 0}</span>
+                        <span className="text-sm font-black text-pink-700 w-5 text-center">{dayMetrics.O || 0}</span>
                         <button 
                           className="text-slate-400 hover:text-green-600 text-[10px] font-bold"
                           onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'O', 1); }}
@@ -1719,7 +1822,7 @@ export default function App() {
                           className="text-slate-400 hover:text-red-600 text-[10px] font-bold"
                           onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'P', -1); }}
                         >-</button>
-                        <span className="text-sm font-black text-purple-700 w-5 text-center">{dayMetrics.present_count || 0}</span>
+                        <span className="text-sm font-black text-purple-700 w-5 text-center">{dayMetrics.P || 0}</span>
                         <button 
                           className="text-slate-400 hover:text-green-600 text-[10px] font-bold"
                           onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'P', 1); }}
@@ -1736,7 +1839,7 @@ export default function App() {
                           className="text-slate-400 hover:text-red-600 text-[10px] font-bold"
                           onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'F', -1); }}
                         >-</button>
-                        <span className="text-sm font-black text-emerald-700 w-5 text-center">{dayMetrics.follow_count || 0}</span>
+                        <span className="text-sm font-black text-emerald-700 w-5 text-center">{dayMetrics.F || 0}</span>
                         <button 
                           className="text-slate-400 hover:text-green-600 text-[10px] font-bold"
                           onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'F', 1); }}
@@ -1751,7 +1854,7 @@ export default function App() {
                           className="text-slate-400 hover:text-red-600 text-[10px] font-bold"
                           onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'R', -1); }}
                         >-</button>
-                        <span className="text-sm font-black text-amber-700 w-5 text-center">{dayMetrics.close_count || 0}</span>
+                        <span className="text-sm font-black text-amber-700 w-5 text-center">{dayMetrics.R || 0}</span>
                         <button 
                           className="text-slate-400 hover:text-green-600 text-[10px] font-bold"
                           onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'R', 1); }}
