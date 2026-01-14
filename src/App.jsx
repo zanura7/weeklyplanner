@@ -1511,7 +1511,7 @@ export default function App() {
         <div className="p-4">
           <h3 className="text-sm font-bold text-slate-700 mb-3">Schedule</h3>
           <div className="space-y-1">
-            {HOURS.map((hour) => {
+            {HOURS.map((hour, hourIndex) => {
               const { isSet, data: appt, categoryData, isFirstBlock } = getApptData(dayIdx, hour);
               
               return (
@@ -1519,11 +1519,11 @@ export default function App() {
                   key={hour} 
                   onClick={() => handleEditActivityClick(dayIdx, hour)}
                   className={`flex items-stretch rounded-xl overflow-hidden border transition-all active:scale-[0.99] ${
-                    isSet ? `${categoryData?.color} border-current` : 'bg-white border-slate-200 hover:border-slate-300'
+                    isSet ? `${categoryData?.color} border-current` : hourIndex % 2 === 0 ? 'bg-slate-50 border-slate-200 hover:border-slate-300' : 'bg-white border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <div className={`w-16 flex-shrink-0 flex items-center justify-center text-xs font-bold py-3 ${
-                    isSet ? 'opacity-70' : 'text-slate-500 bg-slate-50'
+                    isSet ? 'opacity-70' : hourIndex % 2 === 0 ? 'text-slate-500 bg-slate-100' : 'text-slate-500 bg-slate-50'
                   }`}>
                     {hour}:00
                   </div>
@@ -1609,9 +1609,9 @@ export default function App() {
             ))}
           </div>
 
-          {HOURS.map((hour) => (
-            <div key={hour} className="grid grid-cols-8 border-b border-slate-200 last:border-b-0 min-h-[60px]">
-              <div className="border-r border-slate-200 text-xs font-bold text-slate-500 flex items-center justify-center bg-slate-50">
+          {HOURS.map((hour, hourIndex) => (
+            <div key={hour} className={`grid grid-cols-8 border-b border-slate-200 last:border-b-0 min-h-[60px] ${hourIndex % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
+              <div className={`border-r border-slate-200 text-xs font-bold text-slate-500 flex items-center justify-center ${hourIndex % 2 === 0 ? 'bg-slate-100' : 'bg-slate-50'}`}>
                 {hour}:00
               </div>
               {DAYS.map((_, dayIdx) => {
@@ -1622,7 +1622,7 @@ export default function App() {
                     key={dayIdx}
                     onClick={() => handleEditActivityClick(dayIdx, hour)}
                     className={`border-r border-slate-200 last:border-r-0 cursor-pointer transition-colors group ${
-                      isSet ? categoryData?.color : 'hover:bg-slate-50'
+                      isSet ? categoryData?.color : hourIndex % 2 === 0 ? 'hover:bg-slate-100' : 'hover:bg-slate-50'
                     }`}
                   >
                     {isSet ? (
