@@ -43,7 +43,7 @@ const generateOpenRouterResponse = async (prompt, systemInstruction = "") => {
         'X-Title': 'Weekly Activity Planner'
       },
       body: JSON.stringify({
-        model: "google/gemini-2.0-flash-001",
+        model: "deepseek/deepseek-chat-v3-0324",
         messages: messages
       })
     });
