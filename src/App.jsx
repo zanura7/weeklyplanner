@@ -1192,13 +1192,19 @@ export default function App() {
 
     const customId = editId || Date.now().toString();
     
+    // Optimistic update: prepare new appointments object
+    const newAppointments = { ...appointments };
+    
+    // Delete old blocks if editing
     if (editId) {
       const blocksToDelete = Object.keys(appointments).filter(key => appointments[key].custom_id === editId);
       for (const key of blocksToDelete) {
-        await supabase.from('appointments').delete().eq('slot_key', key).eq('user_id', user.id);
+        delete newAppointments[key];
+        supabase.from('appointments').delete().eq('slot_key', key).eq('user_id', user.id);
       }
     }
 
+    // Create new blocks
     for (let d = startDayIndex; d <= endDayIndex; d++) {
       for (let h = actualStartHourBlock; h < actualEndHourBlock; h++) {
         const key = `${weekKey}-${d}-${h}`;
@@ -1218,14 +1224,17 @@ export default function App() {
           updated_at: updateTime
         };
         
-        try {
-          await supabase.from('appointments').upsert(blockData, { onConflict: 'user_id,slot_key' });
-        } catch (e) {
-          console.error("Error saving appt block:", e);
-        }
+        // Optimistic update
+        newAppointments[key] = blockData;
+        
+        // Save to database (fire and forget)
+        supabase.from('appointments').upsert(blockData, { onConflict: 'user_id,slot_key' })
+          .then(({ error }) => { if (error) console.error("Error saving appt block:", error); });
       }
     }
     
+    // Update state immediately
+    setAppointments(newAppointments);
     setIsModalOpen(false);
   };
 
@@ -1234,10 +1243,15 @@ export default function App() {
     
     const blocksToDelete = Object.keys(appointments).filter(key => appointments[key].custom_id === editId);
     
+    // Optimistic update: remove from local state immediately
+    const newAppointments = { ...appointments };
     for (const key of blocksToDelete) {
-      await supabase.from('appointments').delete().eq('slot_key', key).eq('user_id', user.id);
+      delete newAppointments[key];
+      // Delete from database (fire and forget)
+      supabase.from('appointments').delete().eq('slot_key', key).eq('user_id', user.id);
     }
-
+    
+    setAppointments(newAppointments);
     setIsModalOpen(false);
   };
 
