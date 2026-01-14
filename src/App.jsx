@@ -664,6 +664,28 @@ const MobileDaySelector = ({ mobileDay, setMobileDay, getDayDate }) => {
   );
 };
 
+const ActivityCategoriesPanel = () => {
+  return (
+    <div className="bg-white border-t border-slate-200 p-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {Object.values(CATEGORIES).map(cat => (
+          <div 
+            key={cat.id} 
+            className={`${cat.color} rounded-xl p-3 border-2`}
+          >
+            <h4 className="text-xs font-black uppercase tracking-wide mb-2">{cat.fullLabel}</h4>
+            <ul className="space-y-0.5">
+              {cat.activities.map((act, idx) => (
+                <li key={idx} className="text-[10px] font-medium leading-tight">{act}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -1573,14 +1595,15 @@ export default function App() {
             ))}
           </div>
 
+          {/* TOP PRIORITIES Section */}
           <div className="grid grid-cols-8 border-b border-slate-300">
             <div className="p-2 bg-amber-50 text-xs font-bold text-amber-700 text-center border-r border-slate-200 flex items-center justify-center">
-              Tasks
+              TOP PRIORITIES
             </div>
             {DAYS.map((_, idx) => (
               <div key={idx} className="bg-amber-50/50 p-2 border-r border-slate-200 last:border-r-0">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] font-bold text-amber-700">Priorities</span>
+                  <span className="text-[10px] font-bold text-amber-700 uppercase">Top Priorities</span>
                   <button 
                     onClick={() => handleGenerateTasks(idx)}
                     disabled={generatingDay === idx}
@@ -1590,14 +1613,14 @@ export default function App() {
                   </button>
                 </div>
                 <div className="space-y-1">
-                  {[0, 1, 2].map(taskIdx => {
+                  {[0, 1, 2, 3, 4, 5].map(taskIdx => {
                     const taskKey = `${weekKey}-${idx}`;
                     const val = dailyTasks[taskKey]?.[taskIdx] || '';
                     return (
                       <input 
                         key={taskIdx}
                         type="text"
-                        className="w-full text-[10px] bg-white border border-amber-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400"
+                        className="w-full text-[10px] bg-amber-100/50 border border-amber-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400 placeholder:text-amber-400"
                         value={val}
                         onChange={(e) => handleTaskChange(idx, taskIdx, e.target.value)}
                         placeholder={`${taskIdx + 1}.`}
@@ -1607,6 +1630,86 @@ export default function App() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* MFI FRIEN Section - Metrics Row */}
+          <div className="grid grid-cols-8 border-b border-slate-300 bg-slate-50">
+            <div className="p-2 text-xs font-bold text-blue-700 text-center border-r border-slate-200 flex items-center justify-center bg-blue-50">
+              MFI FRIEN
+            </div>
+            {DAYS.map((_, idx) => {
+              const dayKey = `${weekKey}-${idx}`;
+              const dayMetrics = metrics[dayKey] || { open_count: 0, present_count: 0, follow_count: 0, close_count: 0 };
+              
+              return (
+                <div key={idx} className="border-r border-slate-200 last:border-r-0 p-2 bg-white">
+                  <div className="grid grid-cols-2 gap-1 mb-1">
+                    {/* OPEN */}
+                    <div className="bg-pink-50 border border-pink-200 rounded p-1 text-center">
+                      <div className="text-[8px] font-bold text-pink-600 uppercase">Open</div>
+                      <div className="flex items-center justify-center gap-0.5">
+                        <button 
+                          className="text-slate-400 hover:text-red-600 text-[10px] font-bold"
+                          onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'O', -1); }}
+                        >-</button>
+                        <span className="text-sm font-black text-pink-700 w-5 text-center">{dayMetrics.open_count || 0}</span>
+                        <button 
+                          className="text-slate-400 hover:text-green-600 text-[10px] font-bold"
+                          onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'O', 1); }}
+                        >+</button>
+                      </div>
+                    </div>
+                    {/* FIRS/PRESENT */}
+                    <div className="bg-purple-50 border border-purple-200 rounded p-1 text-center">
+                      <div className="text-[8px] font-bold text-purple-600 uppercase">Firs</div>
+                      <div className="flex items-center justify-center gap-0.5">
+                        <button 
+                          className="text-slate-400 hover:text-red-600 text-[10px] font-bold"
+                          onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'P', -1); }}
+                        >-</button>
+                        <span className="text-sm font-black text-purple-700 w-5 text-center">{dayMetrics.present_count || 0}</span>
+                        <button 
+                          className="text-slate-400 hover:text-green-600 text-[10px] font-bold"
+                          onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'P', 1); }}
+                        >+</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1">
+                    {/* FOLLOW */}
+                    <div className="bg-emerald-50 border border-emerald-200 rounded p-1 text-center">
+                      <div className="text-[8px] font-bold text-emerald-600 uppercase">Follow</div>
+                      <div className="flex items-center justify-center gap-0.5">
+                        <button 
+                          className="text-slate-400 hover:text-red-600 text-[10px] font-bold"
+                          onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'F', -1); }}
+                        >-</button>
+                        <span className="text-sm font-black text-emerald-700 w-5 text-center">{dayMetrics.follow_count || 0}</span>
+                        <button 
+                          className="text-slate-400 hover:text-green-600 text-[10px] font-bold"
+                          onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'F', 1); }}
+                        >+</button>
+                      </div>
+                    </div>
+                    {/* CLOSE */}
+                    <div className="bg-amber-50 border border-amber-200 rounded p-1 text-center">
+                      <div className="text-[8px] font-bold text-amber-600 uppercase">Close</div>
+                      <div className="flex items-center justify-center gap-0.5">
+                        <button 
+                          className="text-slate-400 hover:text-red-600 text-[10px] font-bold"
+                          onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'R', -1); }}
+                        >-</button>
+                        <span className="text-sm font-black text-amber-700 w-5 text-center">{dayMetrics.close_count || 0}</span>
+                        <button 
+                          className="text-slate-400 hover:text-green-600 text-[10px] font-bold"
+                          onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, 'R', 1); }}
+                        >+</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {HOURS.map((hour, hourIndex) => (
@@ -1647,48 +1750,10 @@ export default function App() {
             </div>
           ))}
 
-          <div className="grid grid-cols-8 border-t-2 border-slate-300 bg-slate-50">
-            <div className="p-2 text-xs font-bold text-slate-600 text-center border-r border-slate-200 flex items-center justify-center">
-              Metrics
-            </div>
-            {DAYS.map((_, idx) => {
-              const dayKey = `${weekKey}-${idx}`;
-              const dayMetrics = metrics[dayKey] || { open_count: 0, present_count: 0, follow_count: 0, close_count: 0 };
-              
-              return (
-                <div key={idx} className="border-r border-slate-200 last:border-r-0 p-2 bg-white">
-                  <div className="grid grid-cols-2 gap-1">
-                    {['O', 'P', 'F', 'R'].map(metric => {
-                      const config = {
-                        O: { label: 'O', bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200', field: 'open_count' },
-                        P: { label: 'P', bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200', field: 'present_count' },
-                        F: { label: 'F', bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', field: 'follow_count' },
-                        R: { label: 'R', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', field: 'close_count' }
-                      }[metric];
-                      
-                      return (
-                        <div key={metric} className={`${config.bg} ${config.border} border rounded p-1 text-center`}>
-                          <div className={`text-[8px] font-bold ${config.text}`}>{config.label}</div>
-                          <div className="flex items-center justify-center gap-0.5">
-                            <button 
-                              className="text-slate-400 hover:text-red-600 text-[10px] font-bold"
-                              onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, metric, -1); }}
-                            >-</button>
-                            <span className={`text-xs font-black ${config.text} w-4 text-center`}>{dayMetrics[config.field] || 0}</span>
-                            <button 
-                              className="text-slate-400 hover:text-green-600 text-[10px] font-bold"
-                              onClick={(e) => { e.stopPropagation(); handleMetricChange(idx, metric, 1); }}
-                            >+</button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
+
+        {/* Activity Categories Panel */}
+        <ActivityCategoriesPanel />
       </div>
     );
   };
