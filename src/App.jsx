@@ -1698,8 +1698,13 @@ export default function App() {
                     {isSet && isFirstBlock ? (
                       <>
                         <div className="text-sm font-bold leading-tight">
-                          {appt.description || appt.activityType}
+                          {appt.activityType.split('.')[1]?.trim() || appt.activityType}
                         </div>
+                        {appt.description && (
+                          <div className="text-xs opacity-80 leading-tight">
+                            {appt.description}
+                          </div>
+                        )}
                         <div className="text-xs opacity-70 mt-0.5">
                           {appt.startTime} - {appt.endTime}
                         </div>
@@ -1798,9 +1803,14 @@ export default function App() {
                         {isFirstBlock && (
                           <>
                             <div className="text-[10px] font-bold opacity-70">{appt.startTime}-{appt.endTime}</div>
-                            <div className="text-xs font-bold leading-tight truncate">
-                              {appt.description || appt.activityType.split('.')[1]?.trim() || appt.activityType}
+                            <div className="text-[10px] font-bold leading-tight truncate">
+                              {appt.activityType.split('.')[1]?.trim() || appt.activityType}
                             </div>
+                            {appt.description && (
+                              <div className="text-[9px] opacity-80 leading-tight truncate mt-0.5">
+                                {appt.description}
+                              </div>
+                            )}
                           </>
                         )}
                       </div>
