@@ -1582,8 +1582,8 @@ export default function App() {
       <div className="flex-1 overflow-auto p-4">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden min-w-[900px]">
           <div className="grid grid-cols-8 bg-slate-50 border-b border-slate-200">
-            <div className="p-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider border-r border-slate-200">
-              Time
+            <div className="p-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest border-r border-slate-200">
+              TIME
             </div>
             {DAYS.map((day, idx) => (
               <div key={day} className="p-3 text-center border-r border-slate-200 last:border-r-0">
@@ -1634,7 +1634,7 @@ export default function App() {
 
           {HOURS.map((hour, hourIndex) => (
             <div key={hour} className={`grid grid-cols-8 border-b border-slate-200 last:border-b-0 min-h-[60px] ${hourIndex % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
-              <div className={`border-r border-slate-200 text-xs font-bold text-slate-500 flex items-center justify-center ${hourIndex % 2 === 0 ? 'bg-slate-100' : 'bg-slate-50'}`}>
+              <div className={`border-r border-slate-200 text-xs font-bold flex items-center justify-center ${hourIndex % 2 === 0 ? 'bg-white text-slate-600' : 'bg-gradient-to-br from-slate-200 to-slate-300 text-slate-800 border-t border-b border-slate-300'}`}>
                 {hour}:00
               </div>
               {DAYS.map((_, dayIdx) => {
