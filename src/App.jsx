@@ -755,6 +755,25 @@ export default function App() {
 
   const weekKey = useMemo(() => getWeekKey(currentDate), [currentDate]);
   const currentYear = useMemo(() => currentDate.getFullYear(), [currentDate]);
+  
+  const weekNumber = useMemo(() => {
+    const d = new Date(currentDate);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+    const week1 = new Date(d.getFullYear(), 0, 4);
+    return 1 + Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+  }, [currentDate]);
+
+  const isTodayInCurrentWeek = useMemo(() => {
+    const today = new Date();
+    return getWeekKey(today) === weekKey;
+  }, [weekKey]);
+
+  const todayDayIndex = useMemo(() => {
+    const today = new Date();
+    const day = today.getDay();
+    return day === 0 ? 6 : day - 1;
+  }, []);
 
   const getDayDate = (dayIndex) => {
     const curr = new Date(currentDate);
@@ -1735,14 +1754,17 @@ export default function App() {
             <div className="p-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest border-r border-slate-200">
               TIME
             </div>
-            {DAYS.map((day, idx) => (
-              <div key={day} className="p-3 text-center border-r border-slate-200 last:border-r-0">
-                <div className="font-bold text-slate-800">{day}</div>
-                <div className="text-xs text-slate-500">
-                  {getDayDate(idx).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+            {DAYS.map((day, idx) => {
+              const isToday = isTodayInCurrentWeek && idx === todayDayIndex;
+              return (
+                <div key={day} className={`p-3 text-center border-r border-slate-200 last:border-r-0 ${isToday ? 'bg-blue-100' : ''}`}>
+                  <div className={`font-bold ${isToday ? 'text-blue-800' : 'text-slate-800'}`}>{day}</div>
+                  <div className={`text-xs ${isToday ? 'text-blue-600' : 'text-slate-500'}`}>
+                    {getDayDate(idx).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* TOP PRIORITIES Section */}
@@ -1750,36 +1772,39 @@ export default function App() {
             <div className="p-2 bg-amber-50 text-xs font-bold text-amber-700 text-center border-r border-slate-200 flex items-center justify-center">
               TOP PRIORITIES
             </div>
-            {DAYS.map((_, idx) => (
-              <div key={idx} className="bg-amber-50/50 p-2 border-r border-slate-200 last:border-r-0">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-[10px] font-bold text-amber-700 uppercase">Top Priorities</span>
-                  <button 
-                    onClick={() => handleGenerateTasks(idx)}
-                    disabled={generatingDay === idx}
-                    className="text-amber-600 p-1 rounded hover:bg-amber-100"
-                  >
-                    {generatingDay === idx ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
-                  </button>
+            {DAYS.map((_, idx) => {
+              const isToday = isTodayInCurrentWeek && idx === todayDayIndex;
+              return (
+                <div key={idx} className={`p-2 border-r border-slate-200 last:border-r-0 ${isToday ? 'bg-blue-50' : 'bg-amber-50/50'}`}>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] font-bold text-amber-700 uppercase">Top Priorities</span>
+                    <button 
+                      onClick={() => handleGenerateTasks(idx)}
+                      disabled={generatingDay === idx}
+                      className="text-amber-600 p-1 rounded hover:bg-amber-100"
+                    >
+                      {generatingDay === idx ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                    </button>
+                  </div>
+                  <div className="space-y-1">
+                    {[0, 1, 2, 3, 4, 5].map(taskIdx => {
+                      const taskKey = `${weekKey}-${idx}`;
+                      const val = dailyTasks[taskKey]?.[taskIdx] || '';
+                      return (
+                        <input 
+                          key={taskIdx}
+                          type="text"
+                          className="w-full text-[10px] bg-amber-100/50 border border-amber-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400 placeholder:text-amber-400"
+                          value={val}
+                          onChange={(e) => handleTaskChange(idx, taskIdx, e.target.value)}
+                          placeholder={`${taskIdx + 1}.`}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  {[0, 1, 2, 3, 4, 5].map(taskIdx => {
-                    const taskKey = `${weekKey}-${idx}`;
-                    const val = dailyTasks[taskKey]?.[taskIdx] || '';
-                    return (
-                      <input 
-                        key={taskIdx}
-                        type="text"
-                        className="w-full text-[10px] bg-amber-100/50 border border-amber-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-amber-400 placeholder:text-amber-400"
-                        value={val}
-                        onChange={(e) => handleTaskChange(idx, taskIdx, e.target.value)}
-                        placeholder={`${taskIdx + 1}.`}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {HOURS.map((hour, hourIndex) => (
@@ -1789,13 +1814,14 @@ export default function App() {
               </div>
               {DAYS.map((_, dayIdx) => {
                 const { isSet, data: appt, categoryData, isFirstBlock } = getApptData(dayIdx, hour);
+                const isToday = isTodayInCurrentWeek && dayIdx === todayDayIndex;
                 
                 return (
                   <div 
                     key={dayIdx}
                     onClick={() => handleEditActivityClick(dayIdx, hour)}
                     className={`border-r border-slate-200 last:border-r-0 cursor-pointer transition-colors group ${
-                      isSet ? categoryData?.color : hourIndex % 2 === 0 ? 'hover:bg-slate-100' : 'hover:bg-slate-50'
+                      isSet ? categoryData?.color : isToday ? 'bg-blue-50/70 hover:bg-blue-100' : hourIndex % 2 === 0 ? 'hover:bg-slate-100' : 'hover:bg-slate-50'
                     }`}
                   >
                     {isSet ? (
@@ -1833,9 +1859,10 @@ export default function App() {
             {DAYS.map((_, idx) => {
               const dayKey = `${weekKey}-${idx}`;
               const dayMetrics = metrics[dayKey] || { O: 0, P: 0, F: 0, R: 0 };
+              const isToday = isTodayInCurrentWeek && idx === todayDayIndex;
               
               return (
-                <div key={idx} className="border-r border-slate-200 last:border-r-0 p-2 bg-white">
+                <div key={idx} className={`border-r border-slate-200 last:border-r-0 p-2 ${isToday ? 'bg-blue-50' : 'bg-white'}`}>
                   <div className="grid grid-cols-2 gap-1 mb-1">
                     {/* OPEN */}
                     <div className="bg-pink-50 border border-pink-200 rounded p-1 text-center">
@@ -1944,10 +1971,10 @@ export default function App() {
             
             <button 
               onClick={() => setIsOverviewOpen(true)}
-              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-all text-sm font-bold shadow-md active:scale-95"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-all text-sm font-bold shadow-md active:scale-95"
             >
               <Sparkles size={16} strokeWidth={2.5} />
-              <span>Coach</span>
+              <span>Weekly Overview</span>
             </button>
 
             <button 
@@ -1985,7 +2012,7 @@ export default function App() {
               <ChevronLeft size={18} strokeWidth={3} />
             </button>
             <div className="px-4 sm:px-6 font-bold text-sm w-40 sm:w-48 text-center text-slate-900">
-              <span className="block text-xs text-slate-500 uppercase tracking-widest mb-0.5 font-extrabold">{currentYear}</span>
+              <span className="block text-xs text-slate-500 uppercase tracking-widest mb-0.5 font-extrabold">{currentYear}. W{weekNumber}</span>
               {getDayDate(0).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {' '}
               {getDayDate(6).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </div>
