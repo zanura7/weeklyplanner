@@ -311,18 +311,20 @@ const TimeSelectionBlock = ({
 };
 
 const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weeklyOverviewDoc, onRemarksChange, onAiAnalyze, getDayDate }) => {
-  const [remarks, setRemarks] = useState(weeklyOverviewDoc?.remarks || '');
-  const [aiText, setAiText] = useState(weeklyOverviewDoc?.aiAnalysis || null);
+  const [remarks, setRemarks] = useState('');
+  const [aiText, setAiText] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [aiError, setAiError] = useState(null); 
+  const [aiError, setAiError] = useState(null);
+  const [currentWeekKey, setCurrentWeekKey] = useState(weekKey);
 
   useEffect(() => {
-    setRemarks(weeklyOverviewDoc?.remarks || '');
-    if (weeklyOverviewDoc?.aiAnalysis) {
-      setAiText(weeklyOverviewDoc.aiAnalysis);
+    if (weekKey !== currentWeekKey || isOpen) {
+      setRemarks(weeklyOverviewDoc?.remarks || '');
+      setAiText(weeklyOverviewDoc?.aiAnalysis || null);
+      setAiError(null);
+      setCurrentWeekKey(weekKey);
     }
-    setAiError(null); 
-  }, [weeklyOverviewDoc]);
+  }, [weekKey, isOpen, weeklyOverviewDoc, currentWeekKey]);
 
   const stats = useMemo(() => {
     let catCounts = { income: 0, supporting: 0, self_dev: 0, personal: 0 };
