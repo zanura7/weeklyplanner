@@ -384,6 +384,7 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
     const result = await generateGeminiResponse(prompt);
 
     if (result) {
+      setAiText(result);
       onAiAnalyze(result); 
     } else {
       setAiError("Failed to connect to the AI service or retrieve a valid analysis.");
