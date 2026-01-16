@@ -1230,17 +1230,22 @@ export default function App() {
   }, []);
 
   const fetchUserProfile = async (userId) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (error) {
-      console.log('Profile not found, user may be new');
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.log('Profile not found or error:', error.message);
+        return null;
+      }
+      return data;
+    } catch (err) {
+      console.error('Error fetching profile:', err);
       return null;
     }
-    return data;
   };
 
   useEffect(() => {
@@ -2063,7 +2068,7 @@ export default function App() {
     return <LoginScreen onLogin={() => {}} />;
   }
 
-  // Check user profile status
+  // Check user profile status (only if profile exists)
   if (userProfile) {
     // Check if user is denied
     if (userProfile.status === 'denied') {
@@ -2084,17 +2089,17 @@ export default function App() {
         return <AccessDeniedScreen onLogout={handleLogout} userEmail={user.email} reason="Your access has expired" />;
       }
     }
-    
-    // Show Admin Dashboard for admin users
-    if (userProfile.role === 'admin' && showAdminDashboard) {
-      return (
-        <AdminDashboard 
-          currentUser={user} 
-          onLogout={handleLogout} 
-          onBackToPlanner={() => setShowAdminDashboard(false)} 
-        />
-      );
-    }
+  }
+  
+  // Show Admin Dashboard for admin users
+  if (userProfile?.role === 'admin' && showAdminDashboard) {
+    return (
+      <AdminDashboard 
+        currentUser={user} 
+        onLogout={handleLogout} 
+        onBackToPlanner={() => setShowAdminDashboard(false)} 
+      />
+    );
   }
 
   const getApptData = (dayIdx, hour) => {
