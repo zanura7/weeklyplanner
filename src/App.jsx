@@ -549,14 +549,24 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
                 <Sparkles size={18} className="text-blue-500" />
                 AI Performance Coach
               </h4>
-              {!aiText && !isAnalyzing && (
-                <button 
-                  onClick={handleAiAnalyze}
-                  className="text-xs bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-all font-bold flex items-center gap-1 shadow-md shadow-blue-200 active:scale-95"
-                >
-                  <Sparkles size={12} /> Analyze Week
-                </button>
-              )}
+              <div className="flex gap-2">
+                {aiText && !isAnalyzing && (
+                  <button 
+                    onClick={() => { setAiText(null); onAiAnalyze(null); }}
+                    className="text-xs bg-slate-200 text-slate-700 px-4 py-2 rounded-full hover:bg-slate-300 transition-all font-bold flex items-center gap-1 active:scale-95"
+                  >
+                    <RefreshCw size={12} /> Reset
+                  </button>
+                )}
+                {!aiText && !isAnalyzing && (
+                  <button 
+                    onClick={handleAiAnalyze}
+                    className="text-xs bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition-all font-bold flex items-center gap-1 shadow-md shadow-blue-200 active:scale-95"
+                  >
+                    <Sparkles size={12} /> Analyze Week
+                  </button>
+                )}
+              </div>
             </div>
             
             {isAnalyzing && (
