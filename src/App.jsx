@@ -98,9 +98,9 @@ const CATEGORIES = {
     id: 'networking',
     label: 'Networking',
     fullLabel: 'Networking',
-    color: 'bg-purple-200 border-purple-400 text-purple-900 shadow-sm hover:bg-purple-300',
-    activeColor: 'bg-purple-200 border-purple-400 text-purple-900 ring-2 ring-offset-1 ring-slate-400 shadow-md',
-    barColor: 'bg-purple-500',
+    color: 'bg-orange-200 border-orange-400 text-orange-900 shadow-sm hover:bg-orange-300',
+    activeColor: 'bg-orange-200 border-orange-400 text-orange-900 ring-2 ring-offset-1 ring-slate-400 shadow-md',
+    barColor: 'bg-orange-500',
     activities: [
       '10. Recruitment Activities',
       '11. Build COI',
@@ -474,6 +474,59 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
                   </div>
                 </div>
               )
+            })}
+          </div>
+
+          {/* Daily Activities Detail */}
+          <h4 className="text-xs font-bold text-slate-600 mb-4 uppercase tracking-widest pl-1">Daily Activities</h4>
+          <div className="space-y-4 mb-8 sm:mb-10">
+            {DAYS.map((day, dayIdx) => {
+              const dayDate = getDayDate(dayIdx);
+              const dayActivities = Object.values(appointments).filter(
+                appt => appt.week === weekKey && appt.dayIndex === dayIdx
+              );
+              const uniqueActivities = [];
+              const seenIds = new Set();
+              dayActivities.forEach(appt => {
+                if (!seenIds.has(appt.customId)) {
+                  uniqueActivities.push(appt);
+                  seenIds.add(appt.customId);
+                }
+              });
+              uniqueActivities.sort((a, b) => a.startTime.localeCompare(b.startTime));
+              
+              return (
+                <div key={dayIdx} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                  <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 flex justify-between items-center">
+                    <span className="font-bold text-slate-800">{day}</span>
+                    <span className="text-xs text-slate-500">{dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  </div>
+                  <div className="p-3">
+                    {uniqueActivities.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic">No activities</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {uniqueActivities.map((appt, idx) => {
+                          const cat = Object.values(CATEGORIES).find(c => c.id === appt.category);
+                          return (
+                            <div key={idx} className={`flex items-start gap-3 p-2 rounded-lg ${cat?.color || 'bg-slate-100'}`}>
+                              <div className="text-xs font-bold opacity-70 w-20 flex-shrink-0">
+                                {appt.startTime} - {appt.endTime}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-bold truncate">{appt.activityType}</div>
+                                {appt.description && (
+                                  <div className="text-xs opacity-70 truncate">{appt.description}</div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
             })}
           </div>
           
