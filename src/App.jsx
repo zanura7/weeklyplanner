@@ -2257,9 +2257,9 @@ export default function App() {
             {DAYS.map((day, idx) => {
               const isToday = isTodayInCurrentWeek && idx === todayDayIndex;
               return (
-                <div key={day} className={`p-3 text-center border-r border-slate-200 last:border-r-0 ${isToday ? 'bg-blue-100' : ''}`}>
-                  <div className={`font-bold ${isToday ? 'text-blue-800' : 'text-slate-800'}`}>{day}</div>
-                  <div className={`text-xs ${isToday ? 'text-blue-600' : 'text-slate-500'}`}>
+                <div key={day} className={`p-3 text-center border-r border-slate-200 last:border-r-0 ${isToday ? 'bg-blue-200 border-b-4 border-b-blue-500' : ''}`}>
+                  <div className={`font-bold ${isToday ? 'text-blue-900' : 'text-slate-800'}`}>{day}</div>
+                  <div className={`text-xs font-semibold ${isToday ? 'text-blue-700' : 'text-slate-500'}`}>
                     {getDayDate(idx).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                   </div>
                 </div>
@@ -2275,7 +2275,7 @@ export default function App() {
             {DAYS.map((_, idx) => {
               const isToday = isTodayInCurrentWeek && idx === todayDayIndex;
               return (
-                <div key={idx} className={`p-2 border-r border-slate-200 last:border-r-0 ${isToday ? 'bg-blue-50' : 'bg-amber-50/50'}`}>
+                <div key={idx} className={`p-2 border-r border-slate-200 last:border-r-0 ${isToday ? 'bg-blue-100' : 'bg-amber-50/50'}`}>
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-[10px] font-bold text-amber-700 uppercase">Top Priorities</span>
                     <button 
@@ -2321,7 +2321,7 @@ export default function App() {
                     key={dayIdx}
                     onClick={() => handleEditActivityClick(dayIdx, hour)}
                     className={`border-r border-slate-200 last:border-r-0 cursor-pointer transition-colors group ${
-                      isSet ? categoryData?.color : isToday ? 'bg-blue-50/70 hover:bg-blue-100' : hourIndex % 2 === 0 ? 'hover:bg-slate-100' : 'hover:bg-slate-50'
+                      isSet ? categoryData?.color : isToday ? 'bg-blue-100/80 hover:bg-blue-200' : hourIndex % 2 === 0 ? 'hover:bg-slate-100' : 'hover:bg-slate-50'
                     }`}
                   >
                     {isSet ? (
@@ -2362,7 +2362,7 @@ export default function App() {
               const isToday = isTodayInCurrentWeek && idx === todayDayIndex;
               
               return (
-                <div key={idx} className={`border-r border-slate-200 last:border-r-0 p-2 ${isToday ? 'bg-blue-50' : 'bg-white'}`}>
+                <div key={idx} className={`border-r border-slate-200 last:border-r-0 p-2 ${isToday ? 'bg-blue-100' : 'bg-white'}`}>
                   <div className="grid grid-cols-2 gap-1 mb-1">
                     {/* OPEN */}
                     <div className="bg-pink-50 border border-pink-200 rounded p-1 text-center">
@@ -2481,7 +2481,7 @@ export default function App() {
             
             <button 
               onClick={() => setIsOverviewOpen(true)}
-              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-all text-sm font-bold shadow-md active:scale-95"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-sky-400 text-white rounded-full hover:bg-sky-500 transition-all text-sm font-bold shadow-md active:scale-95"
             >
               <Sparkles size={16} strokeWidth={2.5} />
               <span>Weekly Overview</span>
