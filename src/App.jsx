@@ -318,7 +318,9 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
 
   useEffect(() => {
     setRemarks(weeklyOverviewDoc?.remarks || '');
-    setAiText(weeklyOverviewDoc?.aiAnalysis || null);
+    if (weeklyOverviewDoc?.aiAnalysis) {
+      setAiText(weeklyOverviewDoc.aiAnalysis);
+    }
     setAiError(null); 
   }, [weeklyOverviewDoc]);
 
