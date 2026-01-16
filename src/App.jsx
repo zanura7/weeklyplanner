@@ -79,10 +79,10 @@ const CATEGORIES = {
       '4. Prospecting (Build New Customer)'
     ]
   },
-  SUPPORTING: {
-    id: 'supporting',
-    label: 'Support',
-    fullLabel: 'Supporting',
+  SERVICING: {
+    id: 'servicing',
+    label: 'Servicing',
+    fullLabel: 'Servicing',
     color: 'bg-amber-200 border-amber-400 text-amber-900 shadow-sm hover:bg-amber-300',
     activeColor: 'bg-amber-200 border-amber-400 text-amber-900 ring-2 ring-offset-1 ring-slate-400 shadow-md',
     barColor: 'bg-amber-500',
@@ -91,11 +91,20 @@ const CATEGORIES = {
       '6. Proposal Development',
       '7. Client Building',
       '8. Other Telephoning',
-      '9. Record Keeping',
-      '10. Recruiting',
+      '9. Record Keeping'
+    ]
+  },
+  NETWORKING: {
+    id: 'networking',
+    label: 'Networking',
+    fullLabel: 'Networking',
+    color: 'bg-purple-200 border-purple-400 text-purple-900 shadow-sm hover:bg-purple-300',
+    activeColor: 'bg-purple-200 border-purple-400 text-purple-900 ring-2 ring-offset-1 ring-slate-400 shadow-md',
+    barColor: 'bg-purple-500',
+    activities: [
+      '10. Recruitment Activities',
       '11. Build COI',
-      '12. Build High Value Policy',
-      '13. Meeting'
+      '12. Build High Value Policy'
     ]
   },
   SELF_DEV: {
@@ -106,6 +115,7 @@ const CATEGORIES = {
     activeColor: 'bg-blue-200 border-blue-400 text-blue-900 ring-2 ring-offset-1 ring-slate-400 shadow-md',
     barColor: 'bg-blue-500',
     activities: [
+      '13. Meeting',
       '14. Self Development',
       '15. SG Contribution Activity'
     ]
@@ -327,7 +337,7 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
   }, [weekKey, isOpen, weeklyOverviewDoc, currentWeekKey]);
 
   const stats = useMemo(() => {
-    let catCounts = { income: 0, supporting: 0, self_dev: 0, personal: 0 };
+    let catCounts = { income: 0, servicing: 0, networking: 0, self_dev: 0, personal: 0 };
     let totalHours = 0;
     let metricTotals = { O: 0, P: 0, F: 0, R: 0 };
 
@@ -1230,12 +1240,21 @@ export default function App() {
   }, []);
 
   const fetchUserProfile = async (userId) => {
+    console.log('Fetching profile for userId:', userId);
     try {
-      const { data, error } = await supabase
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+      );
+      
+      const fetchPromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
+      
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+      
+      console.log('Profile fetch result:', { data, error });
       
       if (error) {
         console.log('Profile not found or error:', error.message);
@@ -1249,27 +1268,41 @@ export default function App() {
   };
 
   useEffect(() => {
+    console.log('Auth useEffect running...');
+    let isMounted = true;
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('onAuthStateChange:', event, session?.user?.email);
+      if (!isMounted) return;
       setUser(session?.user || null);
       if (session?.user) {
         const profile = await fetchUserProfile(session.user.id);
-        setUserProfile(profile);
+        console.log('Setting userProfile:', profile);
+        if (isMounted) setUserProfile(profile);
       } else {
         setUserProfile(null);
       }
-      setIsLoading(false);
+      console.log('Setting isLoading to false (onAuthStateChange)');
+      if (isMounted) setIsLoading(false);
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log('getSession result:', session?.user?.email);
+      if (!isMounted) return;
       setUser(session?.user || null);
       if (session?.user) {
         const profile = await fetchUserProfile(session.user.id);
-        setUserProfile(profile);
+        console.log('Setting userProfile (getSession):', profile);
+        if (isMounted) setUserProfile(profile);
       }
-      setIsLoading(false);
+      console.log('Setting isLoading to false (getSession)');
+      if (isMounted) setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -1496,7 +1529,7 @@ export default function App() {
   };
   
   const handleExportHtml = () => {
-    let catCounts = { income: 0, supporting: 0, self_dev: 0, personal: 0 };
+    let catCounts = { income: 0, servicing: 0, networking: 0, self_dev: 0, personal: 0 };
     let totalHours = 0;
     let metricTotals = { O: 0, P: 0, F: 0, R: 0 };
     
