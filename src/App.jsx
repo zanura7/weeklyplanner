@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, X, ChevronLeft, ChevronRight, Save, Trash2, Sparkles, Loader2, LogOut, User, Download, Calendar } from 'lucide-react';
+import { Plus, X, ChevronLeft, ChevronRight, Save, Trash2, Sparkles, Loader2, LogOut, User, Download, Calendar, Shield, Users, Check, Ban, Clock, Search, RefreshCw } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -547,7 +547,9 @@ const LoginScreen = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [mobile, setMobile] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -559,18 +561,28 @@ const LoginScreen = ({ onLogin }) => {
     setMessage('');
 
     try {
+      if (isForgotPassword) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        if (error) throw error;
+        setMessage('Password reset link sent to your email!');
+        return;
+      }
+      
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({ 
           email, 
           password,
           options: {
             data: {
-              username: username
+              username: username,
+              mobile: mobile
             }
           }
         });
         if (error) throw error;
-        setMessage('Check your email for confirmation link!');
+        setMessage('Check your email for confirmation link! Your account will be reviewed by admin.');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -593,42 +605,73 @@ const LoginScreen = ({ onLogin }) => {
           <p className="text-blue-100 text-sm">Track your activities & grow</p>
         </div>
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-4">
-          {isSignUp && (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Username</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Your name"
-                required
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
-              />
-            </div>
+          {isForgotPassword ? (
+            <>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              {isSignUp && (
+                <>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Username</label>
+                    <input
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Your name"
+                      required
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Mobile</label>
+                    <input
+                      type="tel"
+                      value={mobile}
+                      onChange={(e) => setMobile(e.target.value)}
+                      placeholder="+62 812 3456 7890"
+                      required
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
+                    />
+                  </div>
+                </>
+              )}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
+                />
+              </div>
+            </>
           )}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              minLength={6}
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
-            />
-          </div>
 
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-semibold">
@@ -648,16 +691,25 @@ const LoginScreen = ({ onLogin }) => {
             className="w-full flex items-center justify-center gap-2 bg-blue-500 text-white hover:bg-blue-600 font-bold py-3.5 px-6 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50"
           >
             {loading ? <Loader2 size={18} className="animate-spin" /> : null}
-            {isSignUp ? 'Sign Up' : 'Sign In'}
+            {isForgotPassword ? 'Send Reset Link' : isSignUp ? 'Sign Up' : 'Sign In'}
           </button>
 
-          <div className="text-center">
+          <div className="text-center space-y-2">
+            {!isForgotPassword && (
+              <button 
+                type="button"
+                onClick={() => { setIsSignUp(!isSignUp); setError(''); setMessage(''); }}
+                className="text-blue-600 hover:text-blue-700 text-sm font-semibold block w-full"
+              >
+                {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+              </button>
+            )}
             <button 
               type="button"
-              onClick={() => { setIsSignUp(!isSignUp); setError(''); setMessage(''); }}
-              className="text-blue-600 hover:text-blue-700 text-sm font-semibold"
+              onClick={() => { setIsForgotPassword(!isForgotPassword); setError(''); setMessage(''); }}
+              className="text-slate-500 hover:text-slate-700 text-sm font-semibold"
             >
-              {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+              {isForgotPassword ? 'Back to Sign In' : 'Forgot Password?'}
             </button>
           </div>
         </form>
@@ -715,9 +767,394 @@ const ActivityCategoriesPanel = () => {
   );
 };
 
+const PendingApprovalScreen = ({ onLogout, userEmail }) => {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl w-full max-w-md overflow-hidden text-center">
+        <div className="bg-gradient-to-br from-amber-400 to-amber-500 p-8 sm:p-10">
+          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Loader2 className="text-white animate-spin" size={32} />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Pending Approval</h1>
+          <p className="text-amber-100 text-sm">Your account is being reviewed</p>
+        </div>
+        <div className="p-6 sm:p-8 space-y-4">
+          <p className="text-slate-600">
+            Hi! Your account <strong>{userEmail}</strong> is currently pending approval from an administrator.
+          </p>
+          <p className="text-slate-500 text-sm">
+            You will receive an email notification once your account has been approved.
+          </p>
+          <button 
+            onClick={onLogout}
+            className="w-full flex items-center justify-center gap-2 bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold py-3 px-6 rounded-xl transition-all"
+          >
+            <LogOut size={18} />
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AccessDeniedScreen = ({ onLogout, userEmail, reason }) => {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-red-50 to-white flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl w-full max-w-md overflow-hidden text-center">
+        <div className="bg-gradient-to-br from-red-500 to-red-600 p-8 sm:p-10">
+          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <X className="text-white" size={32} />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Access Denied</h1>
+          <p className="text-red-100 text-sm">{reason}</p>
+        </div>
+        <div className="p-6 sm:p-8 space-y-4">
+          <p className="text-slate-600">
+            Your account <strong>{userEmail}</strong> cannot access this application.
+          </p>
+          <p className="text-slate-500 text-sm">
+            Please contact the administrator for assistance.
+          </p>
+          <button 
+            onClick={onLogout}
+            className="w-full flex items-center justify-center gap-2 bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold py-3 px-6 rounded-xl transition-all"
+          >
+            <LogOut size={18} />
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [updating, setUpdating] = useState(null);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching users:', error);
+    } else {
+      setUsers(data || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleUpdateStatus = async (userId, newStatus) => {
+    setUpdating(userId);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq('id', userId);
+    
+    if (error) {
+      console.error('Error updating status:', error);
+    } else {
+      setUsers(users.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+    }
+    setUpdating(null);
+  };
+
+  const handleUpdateRole = async (userId, newRole) => {
+    setUpdating(userId);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: newRole, updated_at: new Date().toISOString() })
+      .eq('id', userId);
+    
+    if (error) {
+      console.error('Error updating role:', error);
+    } else {
+      setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
+    }
+    setUpdating(null);
+  };
+
+  const handleUpdateExpiry = async (userId, expiryDate) => {
+    setUpdating(userId);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ expiry_date: expiryDate || null, updated_at: new Date().toISOString() })
+      .eq('id', userId);
+    
+    if (error) {
+      console.error('Error updating expiry:', error);
+    } else {
+      setUsers(users.map(u => u.id === userId ? { ...u, expiry_date: expiryDate } : u));
+    }
+    setUpdating(null);
+  };
+
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = 
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.mobile?.includes(searchTerm);
+    
+    const matchesFilter = filterStatus === 'all' || user.status === filterStatus;
+    
+    return matchesSearch && matchesFilter;
+  });
+
+  const statusCounts = {
+    all: users.length,
+    pending: users.filter(u => u.status === 'pending').length,
+    approved: users.filter(u => u.status === 'approved').length,
+    denied: users.filter(u => u.status === 'denied').length,
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-100">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center">
+              <Shield className="text-white" size={20} />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900">Admin Dashboard</h1>
+              <p className="text-xs text-slate-500">Manage users and permissions</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onBackToPlanner}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors"
+            >
+              <Calendar size={16} className="inline mr-2" />
+              Planner
+            </button>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg">
+              <User size={16} className="text-slate-600" />
+              <span className="text-sm font-medium text-slate-700">{currentUser?.email}</span>
+            </div>
+            <button
+              onClick={onLogout}
+              className="p-2 hover:bg-slate-100 rounded-lg text-slate-600"
+              title="Sign Out"
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-xl p-4 border border-slate-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+                <Users size={20} className="text-slate-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-slate-900">{statusCounts.all}</p>
+                <p className="text-xs text-slate-500">Total Users</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-amber-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                <Clock size={20} className="text-amber-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-amber-600">{statusCounts.pending}</p>
+                <p className="text-xs text-slate-500">Pending</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-green-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Check size={20} className="text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-green-600">{statusCounts.approved}</p>
+                <p className="text-xs text-slate-500">Approved</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl p-4 border border-red-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <Ban size={20} className="text-red-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-red-600">{statusCounts.denied}</p>
+                <p className="text-xs text-slate-500">Denied</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by email, name, or phone..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex gap-2">
+              {['all', 'pending', 'approved', 'denied'].map(status => (
+                <button
+                  key={status}
+                  onClick={() => setFilterStatus(status)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    filterStatus === status
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </button>
+              ))}
+              <button
+                onClick={fetchUsers}
+                className="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
+                title="Refresh"
+              >
+                <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Users Table */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center py-12 text-slate-500">
+              <Loader2 className="animate-spin mr-2" size={20} />
+              Loading users...
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="text-center py-12 text-slate-500">
+              No users found
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">User</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Mobile</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Role</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Expiry Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredUsers.map(user => (
+                    <tr key={user.id} className={`hover:bg-slate-50 ${updating === user.id ? 'opacity-50' : ''}`}>
+                      <td className="px-4 py-3">
+                        <div>
+                          <p className="font-medium text-slate-900">{user.username || '-'}</p>
+                          <p className="text-sm text-slate-500">{user.email}</p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-600">{user.mobile || '-'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          user.status === 'approved' ? 'bg-green-100 text-green-700' :
+                          user.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {user.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <select
+                          value={user.role}
+                          onChange={(e) => handleUpdateRole(user.id, e.target.value)}
+                          disabled={updating === user.id}
+                          className="text-sm border border-slate-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="user">User</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </td>
+                      <td className="px-4 py-3">
+                        <input
+                          type="date"
+                          value={user.expiry_date || ''}
+                          onChange={(e) => handleUpdateExpiry(user.id, e.target.value)}
+                          disabled={updating === user.id}
+                          className="text-sm border border-slate-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          {user.status !== 'approved' && (
+                            <button
+                              onClick={() => handleUpdateStatus(user.id, 'approved')}
+                              disabled={updating === user.id}
+                              className="p-1.5 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg transition-colors"
+                              title="Approve"
+                            >
+                              <Check size={16} />
+                            </button>
+                          )}
+                          {user.status !== 'denied' && (
+                            <button
+                              onClick={() => handleUpdateStatus(user.id, 'denied')}
+                              disabled={updating === user.id}
+                              className="p-1.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg transition-colors"
+                              title="Deny"
+                            >
+                              <Ban size={16} />
+                            </button>
+                          )}
+                          {user.status !== 'pending' && (
+                            <button
+                              onClick={() => handleUpdateStatus(user.id, 'pending')}
+                              disabled={updating === user.id}
+                              className="p-1.5 bg-amber-100 hover:bg-amber-200 text-amber-600 rounded-lg transition-colors"
+                              title="Set Pending"
+                            >
+                              <Clock size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+};
+
 export default function App() {
   const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState({});
@@ -790,14 +1227,38 @@ export default function App() {
     setHeaderImage(randomImg);
   }, []);
 
+  const fetchUserProfile = async (userId) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    if (error) {
+      console.log('Profile not found, user may be new');
+      return null;
+    }
+    return data;
+  };
+
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user || null);
+      if (session?.user) {
+        const profile = await fetchUserProfile(session.user.id);
+        setUserProfile(profile);
+      } else {
+        setUserProfile(null);
+      }
       setIsLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user || null);
+      if (session?.user) {
+        const profile = await fetchUserProfile(session.user.id);
+        setUserProfile(profile);
+      }
       setIsLoading(false);
     });
 
@@ -1600,6 +2061,40 @@ export default function App() {
     return <LoginScreen onLogin={() => {}} />;
   }
 
+  // Check user profile status
+  if (userProfile) {
+    // Check if user is denied
+    if (userProfile.status === 'denied') {
+      return <AccessDeniedScreen onLogout={handleLogout} userEmail={user.email} reason="Your account has been denied" />;
+    }
+    
+    // Check if user is pending
+    if (userProfile.status === 'pending') {
+      return <PendingApprovalScreen onLogout={handleLogout} userEmail={user.email} />;
+    }
+    
+    // Check if user access has expired
+    if (userProfile.expiry_date) {
+      const expiryDate = new Date(userProfile.expiry_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (expiryDate < today) {
+        return <AccessDeniedScreen onLogout={handleLogout} userEmail={user.email} reason="Your access has expired" />;
+      }
+    }
+    
+    // Show Admin Dashboard for admin users
+    if (userProfile.role === 'admin' && showAdminDashboard) {
+      return (
+        <AdminDashboard 
+          currentUser={user} 
+          onLogout={handleLogout} 
+          onBackToPlanner={() => setShowAdminDashboard(false)} 
+        />
+      );
+    }
+  }
+
   const getApptData = (dayIdx, hour) => {
     const key = `${weekKey}-${dayIdx}-${hour}`;
     const appt = appointments[key];
@@ -1959,7 +2454,7 @@ export default function App() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-10">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Weekly Planner</h1>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Weekly Activity Planner</h1>
           </div>
           
           <div className="flex flex-wrap justify-center sm:justify-end items-center gap-2 sm:gap-3">
@@ -1971,6 +2466,16 @@ export default function App() {
               <span className="hidden sm:inline">New Activity</span>
               <span className="inline sm:hidden">New</span>
             </button>
+            
+            {userProfile?.role === 'admin' && (
+              <button 
+                onClick={() => setShowAdminDashboard(true)}
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-all text-sm font-bold shadow-md active:scale-95"
+              >
+                <Shield size={16} strokeWidth={2.5} />
+                <span className="hidden sm:inline">Admin</span>
+              </button>
+            )}
             
             <button 
               onClick={() => setIsOverviewOpen(true)}
