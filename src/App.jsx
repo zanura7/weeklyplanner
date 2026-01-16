@@ -312,13 +312,13 @@ const TimeSelectionBlock = ({
 
 const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weeklyOverviewDoc, onRemarksChange, onAiAnalyze, getDayDate }) => {
   const [remarks, setRemarks] = useState(weeklyOverviewDoc?.remarks || '');
-  const [aiText, setAiText] = useState(weeklyOverviewDoc?.ai_analysis || null);
+  const [aiText, setAiText] = useState(weeklyOverviewDoc?.aiAnalysis || null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiError, setAiError] = useState(null); 
 
   useEffect(() => {
     setRemarks(weeklyOverviewDoc?.remarks || '');
-    setAiText(weeklyOverviewDoc?.ai_analysis || null);
+    setAiText(weeklyOverviewDoc?.aiAnalysis || null);
     setAiError(null); 
   }, [weeklyOverviewDoc]);
 
@@ -1061,7 +1061,7 @@ export default function App() {
 
     const getPercent = (count) => totalHours > 0 ? Math.round((count / totalHours) * 100) : 0;
     
-    const aiAnalysisText = weeklyOverviews[weekKey]?.ai_analysis || "No AI analysis was generated for this week.";
+    const aiAnalysisText = weeklyOverviews[weekKey]?.aiAnalysis || "No AI analysis was generated for this week.";
     const coachRemarksText = weeklyOverviews[weekKey]?.remarks || "No personal coach remarks were added.";
 
     const htmlContent = `<!DOCTYPE html>
