@@ -2045,31 +2045,6 @@ export default function App() {
     
     console.log('Final slots:', { finalStartSlot, finalEndSlot, willCreate: finalEndSlot - finalStartSlot });
 
-    // Check for overlapping appointments
-    const overlappingSlots = [];
-    for (let d = startDayIndex; d <= endDayIndex; d++) {
-      for (let slotIdx = finalStartSlot; slotIdx < finalEndSlot; slotIdx++) {
-        const key = `${weekKey}-${d}-${slotIdx}`;
-        const existingAppt = appointments[key];
-        // If slot is occupied by a different appointment (not the one being edited)
-        if (existingAppt && existingAppt.customId !== editId) {
-          const slot = TIME_SLOTS[slotIdx];
-          overlappingSlots.push({
-            day: DAYS[d],
-            time: slot?.label || `Slot ${slotIdx}`,
-            activity: existingAppt.activityType
-          });
-        }
-      }
-    }
-    
-    if (overlappingSlots.length > 0) {
-      const overlapDetails = overlappingSlots.slice(0, 3).map(o => `${o.day} ${o.time}: ${o.activity}`).join('\n');
-      const moreText = overlappingSlots.length > 3 ? `\n...and ${overlappingSlots.length - 3} more` : '';
-      alert(`Warning: Time slot is overlapped!\n\nConflicting slots:\n${overlapDetails}${moreText}\n\nPlease adjust your time to continue.`);
-      return;
-    }
-
     const newApptData = {
       category: formCategory,
       activityType: formActivity,
