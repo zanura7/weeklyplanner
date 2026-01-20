@@ -2672,12 +2672,12 @@ export default function App() {
                       <div className="p-1 h-full">
                         {isFirstBlock && (
                           <>
-                            <div className="text-[9px] font-bold opacity-70">{appt.startTime}-{appt.endTime}</div>
-                            <div className="text-[9px] font-bold leading-tight truncate">
+                            <div className="text-[10px] font-bold opacity-70">{appt.startTime}-{appt.endTime}</div>
+                            <div className="text-[10px] font-bold leading-tight truncate">
                               {appt.activityType.split('.')[1]?.trim() || appt.activityType}
                             </div>
                             {appt.description && (
-                              <div className="text-[8px] opacity-80 leading-tight truncate">
+                              <div className="text-[9px] opacity-80 leading-tight truncate">
                                 {appt.description}
                               </div>
                             )}
