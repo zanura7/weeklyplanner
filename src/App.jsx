@@ -2589,28 +2589,27 @@ export default function App() {
     return (
       <div className="flex-1 flex flex-col overflow-hidden p-4">
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 flex flex-col overflow-hidden min-w-[900px]">
-          {/* Sticky Header - Days and Dates */}
-          <div className="flex-shrink-0 bg-slate-50 border-b border-slate-200">
-            <div className="grid grid-cols-8">
-              <div className="p-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest border-r border-slate-200">
-                TIME
-              </div>
-              {DAYS.map((day, idx) => {
-                const isToday = isTodayInCurrentWeek && idx === todayDayIndex;
-                return (
-                  <div key={day} className={`p-3 text-center border-r border-slate-200 last:border-r-0 ${isToday ? 'bg-blue-200 border-b-4 border-b-blue-500' : ''}`}>
-                    <div className={`font-bold ${isToday ? 'text-blue-900' : 'text-slate-800'}`}>{day}</div>
-                    <div className={`text-xs font-semibold ${isToday ? 'text-blue-700' : 'text-slate-500'}`}>
-                      {getDayDate(idx).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          
-          {/* Scrollable Content */}
+          {/* Scrollable Content with Sticky Header */}
           <div className="flex-1 overflow-auto">
+            {/* Sticky Header - Days and Dates */}
+            <div className="sticky top-0 z-10 bg-slate-50 border-b border-slate-200">
+              <div className="grid grid-cols-8">
+                <div className="p-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest border-r border-slate-200 bg-slate-50">
+                  TIME
+                </div>
+                {DAYS.map((day, idx) => {
+                  const isToday = isTodayInCurrentWeek && idx === todayDayIndex;
+                  return (
+                    <div key={day} className={`p-3 text-center border-r border-slate-200 last:border-r-0 ${isToday ? 'bg-blue-200 border-b-4 border-b-blue-500' : 'bg-slate-50'}`}>
+                      <div className={`font-bold ${isToday ? 'text-blue-900' : 'text-slate-800'}`}>{day}</div>
+                      <div className={`text-xs font-semibold ${isToday ? 'text-blue-700' : 'text-slate-500'}`}>
+                        {getDayDate(idx).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
           {/* TOP PRIORITIES Section */}
           <div className="grid grid-cols-8 border-b border-slate-300">
@@ -2880,7 +2879,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-hidden">
         {renderDesktopGridView()}
       </main>
 
