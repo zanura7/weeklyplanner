@@ -2587,28 +2587,8 @@ export default function App() {
 
   const renderDesktopGridView = () => {
     return (
-      <div className="flex-1 flex flex-col overflow-hidden p-4">
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 flex flex-col overflow-hidden min-w-[900px]">
-          {/* Fixed Header - Days and Dates (outside scroll) */}
-          <div className="flex-shrink-0 bg-slate-50 border-b border-slate-200">
-            <div className="grid grid-cols-8">
-              <div className="p-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest border-r border-slate-200 bg-slate-50">
-                TIME
-              </div>
-              {DAYS.map((day, idx) => {
-                const isToday = isTodayInCurrentWeek && idx === todayDayIndex;
-                return (
-                  <div key={day} className={`p-3 text-center border-r border-slate-200 last:border-r-0 ${isToday ? 'bg-blue-200 border-b-4 border-b-blue-500' : 'bg-slate-50'}`}>
-                    <div className={`font-bold ${isToday ? 'text-blue-900' : 'text-slate-800'}`}>{day}</div>
-                    <div className={`text-xs font-semibold ${isToday ? 'text-blue-700' : 'text-slate-500'}`}>
-                      {getDayDate(idx).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
+      <div className="flex-1 flex flex-col overflow-hidden p-4 pt-0">
+        <div className="bg-white rounded-b-2xl shadow-lg border border-slate-200 border-t-0 flex flex-col overflow-hidden min-w-[900px]">
           {/* Scrollable Content */}
           <div className="flex-1 overflow-auto">
           {/* TOP PRIORITIES Section */}
@@ -2875,6 +2855,28 @@ export default function App() {
             <button onClick={handleNextWeek} className="p-2 hover:bg-white rounded-full transition-all text-slate-600 hover:text-black">
               <ChevronRight size={18} strokeWidth={3} />
             </button>
+          </div>
+        </div>
+
+        {/* Sticky Days Header */}
+        <div className="bg-slate-50 border-t border-slate-200 px-4">
+          <div className="min-w-[900px]">
+            <div className="grid grid-cols-8">
+              <div className="p-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest border-r border-slate-200 bg-slate-50">
+                TIME
+              </div>
+              {DAYS.map((day, idx) => {
+                const isToday = isTodayInCurrentWeek && idx === todayDayIndex;
+                return (
+                  <div key={day} className={`p-3 text-center border-r border-slate-200 last:border-r-0 ${isToday ? 'bg-blue-200' : 'bg-slate-50'}`}>
+                    <div className={`font-bold ${isToday ? 'text-blue-900' : 'text-slate-800'}`}>{day}</div>
+                    <div className={`text-xs font-semibold ${isToday ? 'text-blue-700' : 'text-slate-500'}`}>
+                      {getDayDate(idx).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </header>
