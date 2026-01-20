@@ -117,7 +117,7 @@ const CATEGORIES = {
     activities: [
       '13. Meeting',
       '14. Self Development',
-      '15. SG Contribution Activity'
+      '15. Community Contribution'
     ]
   },
   PERSONAL: {
