@@ -835,7 +835,7 @@ const LoginScreen = ({ onLogin }) => {
 
 const MobileDaySelector = ({ mobileDay, setMobileDay, getDayDate }) => {
   return (
-    <div className="sticky top-0 z-20 flex overflow-x-auto gap-2 p-3 bg-white border-b border-slate-200 md:hidden scrollbar-hide">
+    <div className="flex overflow-x-auto gap-2 p-3 bg-white border-b border-slate-200 scrollbar-hide">
       {DAYS.map((day, idx) => {
         const isActive = idx === mobileDay;
         const dayDate = getDayDate(idx);
@@ -2863,8 +2863,10 @@ export default function App() {
       </header>
 
       {/* Mobile View */}
-      <div className="md:hidden flex-1 flex flex-col overflow-hidden">
-        <MobileDaySelector mobileDay={mobileDay} setMobileDay={setMobileDay} getDayDate={getDayDate} />
+      <div className="md:hidden flex-1 flex flex-col overflow-y-auto">
+        <div className="sticky top-0 z-20 bg-white">
+          <MobileDaySelector mobileDay={mobileDay} setMobileDay={setMobileDay} getDayDate={getDayDate} />
+        </div>
         {renderMobileDayView()}
       </div>
 
