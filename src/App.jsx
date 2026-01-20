@@ -2045,6 +2045,18 @@ export default function App() {
     
     console.log('Final slots:', { finalStartSlot, finalEndSlot, willCreate: finalEndSlot - finalStartSlot });
 
+    // Check for overlapping appointments
+    for (let d = startDayIndex; d <= endDayIndex; d++) {
+      for (let slotIdx = finalStartSlot; slotIdx < finalEndSlot; slotIdx++) {
+        const key = `${weekKey}-${d}-${slotIdx}`;
+        const existingAppt = appointments[key];
+        if (existingAppt && existingAppt.customId !== editId) {
+          alert('Warning: Time set is overlapped. Please adjust your time to continue.');
+          return;
+        }
+      }
+    }
+
     const newApptData = {
       category: formCategory,
       activityType: formActivity,
