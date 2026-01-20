@@ -1013,6 +1013,37 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
     setUpdating(null);
   };
 
+  const handleDeleteUser = async (userId, userEmail) => {
+    if (!window.confirm(`Are you sure you want to delete user "${userEmail}"? This action cannot be undone.`)) {
+      return;
+    }
+    
+    setUpdating(userId);
+    
+    // Delete user profile
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+    
+    if (profileError) {
+      console.error('Error deleting user profile:', profileError);
+      alert('Failed to delete user. Please try again.');
+      setUpdating(null);
+      return;
+    }
+    
+    // Delete user's appointments
+    await supabase
+      .from('appointments')
+      .delete()
+      .eq('user_id', userId);
+    
+    // Remove user from local state
+    setUsers(users.filter(u => u.id !== userId));
+    setUpdating(null);
+  };
+
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1249,6 +1280,14 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
                               <Clock size={16} />
                             </button>
                           )}
+                          <button
+                            onClick={() => handleDeleteUser(user.id, user.email)}
+                            disabled={updating === user.id}
+                            className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors"
+                            title="Delete User"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </td>
                     </tr>
