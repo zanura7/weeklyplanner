@@ -159,6 +159,24 @@ const timeToSlotIndex = (timeStr) => {
 // Helper to get slot key
 const getSlotKey = (weekKey, dayIndex, slotIndex) => `${weekKey}-${dayIndex}-${slotIndex}`;
 
+// Helper to convert hour to slot indices (for migration)
+const hourToSlotIndices = (hour) => {
+  const baseIndex = (hour - 7) * 2;
+  return [baseIndex, baseIndex + 1]; // Returns both :00 and :30 slots
+};
+
+// Check if slot_key is old format (hourly) vs new format (slot index)
+// Old format: weekKey-dayIndex-hour (e.g., 2025-W03-1-9 where 9 is hour)
+// New format: weekKey-dayIndex-slotIndex (e.g., 2025-W03-1-4 where 4 is slot index for 9:00)
+const isOldKeyFormat = (slotKey, hour) => {
+  const parts = slotKey.split('-');
+  const lastPart = parseInt(parts[parts.length - 1]);
+  // If the last part equals the hour value and hour is >= 7 (valid hour range)
+  // and the slot index would be different, it's old format
+  const expectedSlotIndex = (hour - 7) * 2;
+  return lastPart === hour && lastPart !== expectedSlotIndex && hour >= 7 && hour <= 21;
+};
+
 const Modal = ({ isOpen, onClose, title, children, showActivityReference = false, onSelectActivity, selectedCategory }) => {
   if (!isOpen) return null;
   
@@ -1411,21 +1429,127 @@ export default function App() {
       
       if (apptData) {
         const apptObj = {};
-        apptData.forEach(a => { 
+        const recordsToMigrate = [];
+        const oldKeysToDelete = [];
+        
+        apptData.forEach(a => {
           const key = a.slot_key;
-          apptObj[key] = {
-            category: a.category,
-            activityType: a.activity_type,
-            description: a.description,
-            startTime: a.start_time,
-            endTime: a.end_time,
-            week: a.week_key,
-            dayIndex: a.day_index,
-            hour: a.hour,
-            customId: a.custom_id,
-            lastUpdated: a.updated_at
-          };
+          
+          // Check if this is old format (hourly key)
+          if (isOldKeyFormat(key, a.hour)) {
+            // Mark for migration - need to convert to slot-based keys
+            recordsToMigrate.push(a);
+            oldKeysToDelete.push(key);
+          } else {
+            // New format - use as is
+            apptObj[key] = {
+              category: a.category,
+              activityType: a.activity_type,
+              description: a.description,
+              startTime: a.start_time,
+              endTime: a.end_time,
+              week: a.week_key,
+              dayIndex: a.day_index,
+              hour: a.hour,
+              customId: a.custom_id,
+              lastUpdated: a.updated_at
+            };
+          }
         });
+        
+        // Migrate old records if any
+        if (recordsToMigrate.length > 0) {
+          console.log(`Migrating ${recordsToMigrate.length} old format records...`);
+          
+          const newRecords = [];
+          
+          for (const oldRecord of recordsToMigrate) {
+            // Parse start and end times to determine which slots to fill
+            const startTime = oldRecord.start_time || `${oldRecord.hour}:00`;
+            const endTime = oldRecord.end_time || `${oldRecord.hour + 1}:00`;
+            
+            const startObj = parseTime(startTime);
+            const endObj = parseTime(endTime);
+            
+            // Calculate slot indices based on time
+            const getSlotIdx = (hour, minute) => {
+              const slotMinute = minute < 30 ? 0 : 30;
+              return TIME_SLOTS.findIndex(s => s.hour === hour && s.minute === slotMinute);
+            };
+            
+            let startSlotIdx = getSlotIdx(startObj.hour, startObj.minute);
+            let endSlotIdx = getSlotIdx(endObj.hour, endObj.minute);
+            
+            // Adjust end slot - if end time is exactly on boundary, don't include that slot
+            if (endObj.minute !== 0 && endObj.minute !== 30) {
+              endSlotIdx++;
+            }
+            
+            // Create new records for each slot
+            for (let slotIdx = startSlotIdx; slotIdx < endSlotIdx && slotIdx < TIME_SLOTS.length; slotIdx++) {
+              if (slotIdx < 0) continue;
+              
+              const slot = TIME_SLOTS[slotIdx];
+              const newKey = `${oldRecord.week_key}-${oldRecord.day_index}-${slotIdx}`;
+              
+              // Add to local state
+              apptObj[newKey] = {
+                category: oldRecord.category,
+                activityType: oldRecord.activity_type,
+                description: oldRecord.description,
+                startTime: oldRecord.start_time,
+                endTime: oldRecord.end_time,
+                week: oldRecord.week_key,
+                dayIndex: oldRecord.day_index,
+                hour: slot.hour,
+                customId: oldRecord.custom_id,
+                lastUpdated: oldRecord.updated_at
+              };
+              
+              // Prepare for database update
+              newRecords.push({
+                user_id: oldRecord.user_id,
+                slot_key: newKey,
+                week_key: oldRecord.week_key,
+                day_index: oldRecord.day_index,
+                hour: slot.hour,
+                category: oldRecord.category,
+                activity_type: oldRecord.activity_type,
+                description: oldRecord.description,
+                start_time: oldRecord.start_time,
+                end_time: oldRecord.end_time,
+                custom_id: oldRecord.custom_id,
+                updated_at: new Date().toISOString()
+              });
+            }
+          }
+          
+          // Delete old records and insert new ones in database
+          if (oldKeysToDelete.length > 0) {
+            const { error: deleteError } = await supabase
+              .from('appointments')
+              .delete()
+              .eq('user_id', user.id)
+              .in('slot_key', oldKeysToDelete);
+            
+            if (deleteError) {
+              console.error('Error deleting old records:', deleteError);
+            }
+          }
+          
+          if (newRecords.length > 0) {
+            const { error: insertError } = await supabase
+              .from('appointments')
+              .upsert(newRecords, { onConflict: 'user_id,slot_key' });
+            
+            if (insertError) {
+              console.error('Error inserting migrated records:', insertError);
+            } else {
+              console.log(`Successfully migrated ${newRecords.length} records`);
+            }
+          }
+        }
+        
         setAppointments(apptObj);
       }
 
