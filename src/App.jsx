@@ -2862,8 +2862,15 @@ export default function App() {
 
       </header>
 
-      <main className="flex-1 overflow-auto">
-        {/* Sticky Days Header - Inside main to scroll together */}
+      {/* Mobile View */}
+      <div className="md:hidden flex-1 flex flex-col overflow-hidden">
+        <MobileDaySelector mobileDay={mobileDay} setMobileDay={setMobileDay} getDayDate={getDayDate} />
+        {renderMobileDayView()}
+      </div>
+
+      {/* Desktop View */}
+      <main className="hidden md:flex flex-1 flex-col overflow-auto">
+        {/* Sticky Days Header */}
         <div className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200 px-4">
           <div className="min-w-[900px]">
             <div className="grid grid-cols-8">
