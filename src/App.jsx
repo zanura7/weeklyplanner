@@ -2859,7 +2859,7 @@ export default function App() {
         </div>
 
         {/* Sticky Days Header */}
-        <div className="bg-slate-50 border-t border-slate-200 px-4">
+        <div className="relative z-20 bg-slate-50 border-t border-slate-200 px-4">
           <div className="min-w-[900px]">
             <div className="grid grid-cols-8">
               <div className="p-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest border-r border-slate-200 bg-slate-50">
