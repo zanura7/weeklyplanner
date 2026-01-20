@@ -2860,22 +2860,13 @@ export default function App() {
           </div>
         </div>
 
-      </header>
-
-      {/* Mobile View */}
-      <div className="md:hidden flex-1 flex flex-col">
-        <div className="sticky top-0 z-20 bg-white shadow-sm">
+        {/* Mobile Day Selector - Inside header for sticky */}
+        <div className="md:hidden bg-white border-t border-slate-200">
           <MobileDaySelector mobileDay={mobileDay} setMobileDay={setMobileDay} getDayDate={getDayDate} />
         </div>
-        <div className="flex-1 overflow-y-auto">
-          {renderMobileDayView()}
-        </div>
-      </div>
 
-      {/* Desktop View */}
-      <main className="hidden md:flex flex-1 flex-col">
-        {/* Sticky Days Header */}
-        <div className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200 px-4 shadow-sm">
+        {/* Desktop Days Header - Inside header for sticky */}
+        <div className="hidden md:block bg-slate-50 border-t border-slate-200 px-4">
           <div className="min-w-[900px]">
             <div className="grid grid-cols-8">
               <div className="p-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest border-r border-slate-200 bg-slate-50">
@@ -2895,9 +2886,16 @@ export default function App() {
             </div>
           </div>
         </div>
-        <div className="flex-1 overflow-auto">
-          {renderDesktopGridView()}
-        </div>
+      </header>
+
+      {/* Mobile View */}
+      <div className="md:hidden flex-1 overflow-y-auto">
+        {renderMobileDayView()}
+      </div>
+
+      {/* Desktop View */}
+      <main className="hidden md:block flex-1 overflow-auto">
+        {renderDesktopGridView()}
       </main>
 
       <OverviewModal 
