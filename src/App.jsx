@@ -141,6 +141,24 @@ const CATEGORIES = {
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 7);
 
+// Generate 30-minute time slots from 7:00 to 21:30
+const TIME_SLOTS = [];
+for (let h = 7; h <= 21; h++) {
+  TIME_SLOTS.push({ hour: h, minute: 0, label: `${h}:00` });
+  if (h < 21) {
+    TIME_SLOTS.push({ hour: h, minute: 30, label: `${h}:30` });
+  }
+}
+
+// Helper to convert time string to slot index
+const timeToSlotIndex = (timeStr) => {
+  const { hour, minute } = parseTime(timeStr);
+  return TIME_SLOTS.findIndex(s => s.hour === hour && (minute < 30 ? s.minute === 0 : s.minute === 30));
+};
+
+// Helper to get slot key
+const getSlotKey = (weekKey, dayIndex, slotIndex) => `${weekKey}-${dayIndex}-${slotIndex}`;
+
 const Modal = ({ isOpen, onClose, title, children, showActivityReference = false, onSelectActivity, selectedCategory }) => {
   if (!isOpen) return null;
   
@@ -1806,8 +1824,8 @@ export default function App() {
     setIsModalOpen(true);
   };
   
-  const handleEditActivityClick = (dayIndex, hour) => {
-    const key = `${weekKey}-${dayIndex}-${hour}`;
+  const handleEditActivityClick = (dayIndex, slotIndex) => {
+    const key = `${weekKey}-${dayIndex}-${slotIndex}`;
     const existing = appointments[key];
     
     if (existing) {
@@ -1823,11 +1841,13 @@ export default function App() {
       setStartDayIndex(Math.min(...dayIndices));
       setEndDayIndex(Math.max(...dayIndices));
     } else {
+      const slot = TIME_SLOTS[slotIndex];
+      const nextSlot = TIME_SLOTS[slotIndex + 1] || { hour: 22, minute: 0 };
       setFormCategory('income');
       setFormActivity(CATEGORIES.INCOME.activities[0]);
       setFormDescription('');
-      setFormStartTime(formatTime(hour, 0));
-      setFormEndTime(formatTime(hour + 1, 0));
+      setFormStartTime(formatTime(slot.hour, slot.minute));
+      setFormEndTime(formatTime(nextSlot.hour, nextSlot.minute));
       setEditId(null);
       setStartDayIndex(dayIndex);
       setEndDayIndex(dayIndex);
@@ -1854,14 +1874,36 @@ export default function App() {
     
     const updateTime = new Date().toISOString();
 
-    const startHourBlock = startObj.hour; 
-    const endHourBlock = endObj.hour + (endObj.minute > 0 ? 1 : 0); 
+    // Calculate start and end slot indices based on 30-minute slots
+    const startSlotIndex = TIME_SLOTS.findIndex(s => 
+      s.hour === startObj.hour && s.minute <= startObj.minute && (s.minute + 30 > startObj.minute || s.minute === 30)
+    ) || TIME_SLOTS.findIndex(s => s.hour === startObj.hour && s.minute === (startObj.minute < 30 ? 0 : 30));
     
-    const minHour = HOURS[0];
-    const maxHour = HOURS[HOURS.length - 1] + 1;
+    const endSlotIndex = TIME_SLOTS.findIndex(s => 
+      s.hour === endObj.hour && s.minute >= endObj.minute
+    );
     
-    const actualStartHourBlock = Math.max(startHourBlock, minHour);
-    const actualEndHourBlock = Math.min(endHourBlock, maxHour);
+    // Better calculation for slot indices
+    const getSlotIndexForTime = (hour, minute) => {
+      const slotMinute = minute < 30 ? 0 : 30;
+      return TIME_SLOTS.findIndex(s => s.hour === hour && s.minute === slotMinute);
+    };
+    
+    const actualStartSlot = getSlotIndexForTime(startObj.hour, startObj.minute);
+    let actualEndSlot = getSlotIndexForTime(endObj.hour, endObj.minute);
+    
+    // If end time is exactly on a slot boundary (like 10:00 or 10:30), we don't include that slot
+    // If end time is past a boundary (like 10:15), we include that slot
+    if (endObj.minute === 0 || endObj.minute === 30) {
+      // Exact boundary - don't include this slot, it ends just before
+    } else {
+      // Past boundary - include the slot
+      actualEndSlot++;
+    }
+    
+    // Ensure valid range
+    const finalStartSlot = Math.max(0, actualStartSlot);
+    const finalEndSlot = Math.min(TIME_SLOTS.length, actualEndSlot);
 
     const newApptData = {
       category: formCategory,
@@ -1897,17 +1939,22 @@ export default function App() {
       }
     }
 
-    // 2. Create new blocks for ALL days in range
+    // 2. Create new blocks for ALL days in range using 30-minute slots
     const newBlocks = [];
     for (let d = startDayIndex; d <= endDayIndex; d++) {
-      for (let h = actualStartHourBlock; h < actualEndHourBlock; h++) {
-        const key = `${weekKey}-${d}-${h}`;
+      for (let slotIdx = finalStartSlot; slotIdx < finalEndSlot; slotIdx++) {
+        const slot = TIME_SLOTS[slotIdx];
+        if (!slot) continue;
+        
+        const key = `${weekKey}-${d}-${slotIdx}`;
         
         const blockData = {
           ...newApptData,
           dayIndex: d,
           customId: customId,
-          hour: h,
+          slotIndex: slotIdx,
+          hour: slot.hour,
+          minute: slot.minute,
         };
         
         // Database format
@@ -1916,7 +1963,7 @@ export default function App() {
           slot_key: key,
           week_key: weekKey,
           day_index: d,
-          hour: h,
+          hour: slot.hour,
           category: formCategory,
           activity_type: formActivity,
           description: formDescription,
@@ -2198,8 +2245,8 @@ export default function App() {
     );
   }
 
-  const getApptData = (dayIdx, hour) => {
-    const key = `${weekKey}-${dayIdx}-${hour}`;
+  const getApptData = (dayIdx, slotIndex) => {
+    const key = `${weekKey}-${dayIdx}-${slotIndex}`;
     const appt = appointments[key];
     
     if (!appt) return { isSet: false, data: null, categoryData: null };
@@ -2207,10 +2254,10 @@ export default function App() {
     const categoryData = Object.values(CATEGORIES).find(c => c.id === appt.category);
     
     const isFirstBlock = (() => {
-      const apptStartTimeHour = parseTime(appt.startTime).hour;
-      if (hour === apptStartTimeHour) return true;
+      // Check if this is the first slot for this appointment
+      if (slotIndex === 0) return true;
       
-      const prevKey = `${weekKey}-${dayIdx}-${hour - 1}`;
+      const prevKey = `${weekKey}-${dayIdx}-${slotIndex - 1}`;
       const prevAppt = appointments[prevKey];
       
       return !prevAppt || prevAppt.customId !== appt.customId;
@@ -2298,23 +2345,23 @@ export default function App() {
         <div className="p-4">
           <h3 className="text-sm font-bold text-slate-700 mb-3">Schedule</h3>
           <div className="space-y-1">
-            {HOURS.map((hour, hourIndex) => {
-              const { isSet, data: appt, categoryData, isFirstBlock } = getApptData(dayIdx, hour);
+            {TIME_SLOTS.map((slot, slotIndex) => {
+              const { isSet, data: appt, categoryData, isFirstBlock } = getApptData(dayIdx, slotIndex);
               
               return (
                 <div 
-                  key={hour} 
-                  onClick={() => handleEditActivityClick(dayIdx, hour)}
+                  key={slotIndex} 
+                  onClick={() => handleEditActivityClick(dayIdx, slotIndex)}
                   className={`flex items-stretch rounded-xl overflow-hidden border transition-all active:scale-[0.99] ${
-                    isSet ? `${categoryData?.color} border-current` : hourIndex % 2 === 0 ? 'bg-slate-50 border-slate-200 hover:border-slate-300' : 'bg-white border-slate-200 hover:border-slate-300'
+                    isSet ? `${categoryData?.color} border-current` : slot.minute === 0 ? 'bg-slate-50 border-slate-200 hover:border-slate-300' : 'bg-white border-slate-200 hover:border-slate-300'
                   }`}
                 >
-                  <div className={`w-16 flex-shrink-0 flex items-center justify-center text-xs font-bold py-3 ${
-                    isSet ? 'opacity-70' : hourIndex % 2 === 0 ? 'text-slate-500 bg-slate-100' : 'text-slate-500 bg-slate-50'
+                  <div className={`w-16 flex-shrink-0 flex items-center justify-center text-xs font-bold py-2 ${
+                    isSet ? 'opacity-70' : slot.minute === 0 ? 'text-slate-500 bg-slate-100' : 'text-slate-400 bg-slate-50'
                   }`}>
-                    {hour}:00
+                    {slot.label}
                   </div>
-                  <div className="flex-1 p-3 min-h-[52px]">
+                  <div className="flex-1 p-2 min-h-[40px]">
                     {isSet && isFirstBlock ? (
                       <>
                         <div className="text-sm font-bold leading-tight">
@@ -2408,33 +2455,33 @@ export default function App() {
             })}
           </div>
 
-          {HOURS.map((hour, hourIndex) => (
-            <div key={hour} className={`grid grid-cols-8 border-b border-slate-200 last:border-b-0 min-h-[60px] ${hourIndex % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
-              <div className={`border-r border-slate-200 text-xs font-bold flex items-center justify-center ${hourIndex % 2 === 0 ? 'bg-white text-slate-600' : 'bg-gradient-to-br from-slate-200 to-slate-300 text-slate-800 border-t border-b border-slate-300'}`}>
-                {hour}:00
+          {TIME_SLOTS.map((slot, slotIndex) => (
+            <div key={slotIndex} className={`grid grid-cols-8 border-b border-slate-200 last:border-b-0 min-h-[36px] ${slot.minute === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
+              <div className={`border-r border-slate-200 text-xs font-bold flex items-center justify-center ${slot.minute === 0 ? 'bg-white text-slate-600' : 'bg-slate-100 text-slate-400'}`}>
+                {slot.label}
               </div>
               {DAYS.map((_, dayIdx) => {
-                const { isSet, data: appt, categoryData, isFirstBlock } = getApptData(dayIdx, hour);
+                const { isSet, data: appt, categoryData, isFirstBlock } = getApptData(dayIdx, slotIndex);
                 const isToday = isTodayInCurrentWeek && dayIdx === todayDayIndex;
                 
                 return (
                   <div 
                     key={dayIdx}
-                    onClick={() => handleEditActivityClick(dayIdx, hour)}
+                    onClick={() => handleEditActivityClick(dayIdx, slotIndex)}
                     className={`border-r border-slate-200 last:border-r-0 cursor-pointer transition-colors group ${
-                      isSet ? categoryData?.color : isToday ? 'bg-blue-100/80 hover:bg-blue-200' : hourIndex % 2 === 0 ? 'hover:bg-slate-100' : 'hover:bg-slate-50'
+                      isSet ? categoryData?.color : isToday ? 'bg-blue-100/80 hover:bg-blue-200' : slot.minute === 0 ? 'hover:bg-slate-100' : 'hover:bg-slate-50'
                     }`}
                   >
                     {isSet ? (
-                      <div className="p-1.5 h-full">
+                      <div className="p-1 h-full">
                         {isFirstBlock && (
                           <>
-                            <div className="text-[10px] font-bold opacity-70">{appt.startTime}-{appt.endTime}</div>
-                            <div className="text-[10px] font-bold leading-tight truncate">
+                            <div className="text-[9px] font-bold opacity-70">{appt.startTime}-{appt.endTime}</div>
+                            <div className="text-[9px] font-bold leading-tight truncate">
                               {appt.activityType.split('.')[1]?.trim() || appt.activityType}
                             </div>
                             {appt.description && (
-                              <div className="text-[9px] opacity-80 leading-tight truncate mt-0.5">
+                              <div className="text-[8px] opacity-80 leading-tight truncate">
                                 {appt.description}
                               </div>
                             )}
@@ -2443,7 +2490,7 @@ export default function App() {
                       </div>
                     ) : (
                       <div className="h-full flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <Plus size={14} className="text-slate-400" />
+                        <Plus size={12} className="text-slate-400" />
                       </div>
                     )}
                   </div>
