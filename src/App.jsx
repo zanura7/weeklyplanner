@@ -2861,12 +2861,12 @@ export default function App() {
         </div>
 
         {/* Mobile Day Selector - Inside header for sticky */}
-        <div className="md:hidden bg-white border-t border-slate-200">
+        <div className="md:hidden bg-white border-t border-slate-200 relative z-10">
           <MobileDaySelector mobileDay={mobileDay} setMobileDay={setMobileDay} getDayDate={getDayDate} />
         </div>
 
         {/* Desktop Days Header - Inside header for sticky */}
-        <div className="hidden md:block bg-slate-50 border-t border-slate-200 px-4">
+        <div className="hidden md:block bg-slate-50 border-t border-slate-200 px-4 relative z-10">
           <div className="min-w-[900px]">
             <div className="grid grid-cols-8">
               <div className="p-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest border-r border-slate-200 bg-slate-50">
