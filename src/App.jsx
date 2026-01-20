@@ -370,11 +370,13 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
       }
     });
 
-    Object.values(metrics).forEach(m => {
-      metricTotals.O += m.O || 0;
-      metricTotals.P += m.P || 0;
-      metricTotals.F += m.F || 0;
-      metricTotals.R += m.R || 0;
+    Object.entries(metrics).forEach(([key, m]) => {
+      if (key.startsWith(`${weekKey}-`)) {
+        metricTotals.O += m.O || 0;
+        metricTotals.P += m.P || 0;
+        metricTotals.F += m.F || 0;
+        metricTotals.R += m.R || 0;
+      }
     });
 
     return { catCounts, totalHours, metricTotals };
@@ -1637,11 +1639,13 @@ export default function App() {
       return a.startTime.localeCompare(b.startTime);
     });
 
-    Object.values(metrics).forEach(m => {
-      metricTotals.O += m.O || 0;
-      metricTotals.P += m.P || 0;
-      metricTotals.F += m.F || 0;
-      metricTotals.R += m.R || 0;
+    Object.entries(metrics).forEach(([key, m]) => {
+      if (key.startsWith(`${weekKey}-`)) {
+        metricTotals.O += m.O || 0;
+        metricTotals.P += m.P || 0;
+        metricTotals.F += m.F || 0;
+        metricTotals.R += m.R || 0;
+      }
     });
 
     const getPercent = (count) => totalHours > 0 ? Math.round((count / totalHours) * 100) : 0;
