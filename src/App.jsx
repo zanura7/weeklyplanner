@@ -2770,7 +2770,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-900 flex flex-col">
-      <header className="sticky top-0 z-30 border-b border-gray-200/80 relative overflow-hidden">
+      <header className="sticky top-0 z-30 border-b border-gray-200/80 relative">
         <div className="absolute inset-0 z-0">
           {headerImage && (
             <img 
@@ -2860,8 +2860,11 @@ export default function App() {
           </div>
         </div>
 
-        {/* Sticky Days Header */}
-        <div className="relative z-20 bg-slate-50 border-t border-slate-200 px-4">
+      </header>
+
+      <main className="flex-1 overflow-auto">
+        {/* Sticky Days Header - Inside main to scroll together */}
+        <div className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200 px-4">
           <div className="min-w-[900px]">
             <div className="grid grid-cols-8">
               <div className="p-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-widest border-r border-slate-200 bg-slate-50">
@@ -2881,9 +2884,6 @@ export default function App() {
             </div>
           </div>
         </div>
-      </header>
-
-      <main className="flex-1 overflow-auto">
         {renderDesktopGridView()}
       </main>
 
