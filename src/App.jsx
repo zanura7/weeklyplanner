@@ -2465,7 +2465,7 @@ export default function App() {
     const dayMetrics = metrics[dayKey] || { O: 0, P: 0, F: 0, R: 0 };
 
     return (
-      <div className="flex-1 overflow-y-auto pb-20">
+      <div className="pb-20">
         <div className="bg-amber-50 p-4 border-b border-amber-200">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-sm font-bold text-amber-800">Today's Priorities</h3>
