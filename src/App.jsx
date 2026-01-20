@@ -708,71 +708,72 @@ const LoginScreen = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl w-full max-w-sm overflow-hidden">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-8 sm:p-10 text-center">
-          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+      <div className="bg-slate-800/80 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-700/50">
+        {/* Header */}
+        <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-8 sm:p-10 text-center rounded-b-[2rem]">
+          <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <Calendar className="text-white" size={32} />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">Weekly Planner</h1>
-          <p className="text-blue-100 text-sm">Track your activities & grow</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Weekly Planner</h1>
+          <p className="text-blue-200 text-sm">Track your activities & grow</p>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-4">
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-5">
           {isForgotPassword ? (
-            <>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
-                />
-              </div>
-            </>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                className="w-full p-3.5 bg-slate-700/50 border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+              />
+            </div>
           ) : (
             <>
               {isSignUp && (
                 <>
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Username</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Username</label>
                     <input
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="Your name"
                       required
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
+                      className="w-full p-3.5 bg-slate-700/50 border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Mobile</label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Mobile</label>
                     <input
                       type="tel"
                       value={mobile}
                       onChange={(e) => setMobile(e.target.value)}
                       placeholder="+62 812 3456 7890"
                       required
-                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
+                      className="w-full p-3.5 bg-slate-700/50 border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
                     />
                   </div>
                 </>
               )}
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Email</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
+                  className="w-full p-3.5 bg-slate-700/50 border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Password</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Password</label>
                 <input
                   type="password"
                   value={password}
@@ -780,20 +781,20 @@ const LoginScreen = ({ onLogin }) => {
                   placeholder="••••••••"
                   required
                   minLength={6}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-500 transition-all outline-none text-slate-800"
+                  className="w-full p-3.5 bg-slate-700/50 border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
                 />
               </div>
             </>
           )}
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-semibold">
+            <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-400 text-sm font-medium">
               {error}
             </div>
           )}
 
           {message && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-600 text-sm font-semibold">
+            <div className="p-3 bg-green-500/20 border border-green-500/50 rounded-xl text-green-400 text-sm font-medium">
               {message}
             </div>
           )}
@@ -801,26 +802,27 @@ const LoginScreen = ({ onLogin }) => {
           <button 
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-blue-500 text-white hover:bg-blue-600 font-bold py-3.5 px-6 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-500 font-bold py-3.5 px-6 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-blue-600/30"
           >
             {loading ? <Loader2 size={18} className="animate-spin" /> : null}
             {isForgotPassword ? 'Send Reset Link' : isSignUp ? 'Sign Up' : 'Sign In'}
           </button>
 
-          <div className="text-center space-y-2">
+          <div className="flex items-center justify-center gap-4 pt-2">
             {!isForgotPassword && (
               <button 
                 type="button"
                 onClick={() => { setIsSignUp(!isSignUp); setError(''); setMessage(''); }}
-                className="text-blue-600 hover:text-blue-700 text-sm font-semibold block w-full"
+                className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
               >
-                {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+                {isSignUp ? 'Sign In' : 'Sign Up'}
               </button>
             )}
+            {!isForgotPassword && <span className="text-slate-600">|</span>}
             <button 
               type="button"
               onClick={() => { setIsForgotPassword(!isForgotPassword); setError(''); setMessage(''); }}
-              className="text-slate-500 hover:text-slate-700 text-sm font-semibold"
+              className="text-slate-500 hover:text-slate-400 text-sm font-medium transition-colors"
             >
               {isForgotPassword ? 'Back to Sign In' : 'Forgot Password?'}
             </button>
