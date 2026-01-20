@@ -2020,6 +2020,16 @@ export default function App() {
     const actualStartSlot = getSlotIndexForTime(startObj.hour, startObj.minute);
     let actualEndSlot = getSlotIndexForTime(endObj.hour, endObj.minute);
     
+    console.log('Save Debug:', {
+      startTime: formStartTime,
+      endTime: formEndTime,
+      startObj,
+      endObj,
+      actualStartSlot,
+      actualEndSlot,
+      TIME_SLOTS_length: TIME_SLOTS.length
+    });
+    
     // If end time is exactly on a slot boundary (like 10:00 or 10:30), we don't include that slot
     // If end time is past a boundary (like 10:15), we include that slot
     if (endObj.minute === 0 || endObj.minute === 30) {
@@ -2032,6 +2042,8 @@ export default function App() {
     // Ensure valid range
     const finalStartSlot = Math.max(0, actualStartSlot);
     const finalEndSlot = Math.min(TIME_SLOTS.length, actualEndSlot);
+    
+    console.log('Final slots:', { finalStartSlot, finalEndSlot, willCreate: finalEndSlot - finalStartSlot });
 
     const newApptData = {
       category: formCategory,
