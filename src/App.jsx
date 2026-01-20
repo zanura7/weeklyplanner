@@ -835,7 +835,7 @@ const LoginScreen = ({ onLogin }) => {
 
 const MobileDaySelector = ({ mobileDay, setMobileDay, getDayDate }) => {
   return (
-    <div className="flex overflow-x-auto gap-2 p-3 bg-white border-b border-slate-200 md:hidden scrollbar-hide">
+    <div className="sticky top-0 z-20 flex overflow-x-auto gap-2 p-3 bg-white border-b border-slate-200 md:hidden scrollbar-hide">
       {DAYS.map((day, idx) => {
         const isActive = idx === mobileDay;
         const dayDate = getDayDate(idx);
