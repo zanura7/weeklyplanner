@@ -2589,8 +2589,8 @@ export default function App() {
 
   const renderDesktopGridView = () => {
     return (
-      <div className="flex-1 flex flex-col overflow-hidden p-4 pt-0">
-        <div className="bg-white rounded-b-2xl shadow-lg border border-slate-200 border-t-0 flex flex-col overflow-hidden min-w-[900px]">
+      <div className="flex-1 flex flex-col p-4 pt-0">
+        <div className="bg-white rounded-b-2xl shadow-lg border border-slate-200 border-t-0 flex flex-col min-w-[900px]">
           {/* Scrollable Content */}
           <div className="flex-1 overflow-auto">
           {/* TOP PRIORITIES Section */}
@@ -2883,7 +2883,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 overflow-auto">
         {renderDesktopGridView()}
       </main>
 
