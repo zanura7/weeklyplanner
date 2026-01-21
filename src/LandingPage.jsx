@@ -77,9 +77,11 @@ const LandingPage = () => {
                     <span className="text-xs text-slate-500">SpeedPlan</span>
                   </div>
                 </div>
-                <div className="aspect-[16/9] bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
-                  <div className="text-slate-600 text-sm">Sales Professionals Dashboard Preview</div>
-                </div>
+                <img 
+                  src="/mockupapp.png" 
+                  alt="Speed Planner Dashboard" 
+                  className="w-full"
+                />
               </div>
             </div>
           </div>
