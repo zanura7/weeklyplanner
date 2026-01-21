@@ -1017,33 +1017,57 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
   };
 
   const handleDeleteUser = async (userId, userEmail) => {
-    if (!window.confirm(`Are you sure you want to delete user "${userEmail}"? This action cannot be undone.`)) {
+    if (!window.confirm(`Are you sure you want to delete user "${userEmail}"? This will delete ALL user data including appointments, tasks, metrics, and weekly overviews. This action cannot be undone.`)) {
       return;
     }
     
     setUpdating(userId);
     
-    // Delete user profile
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', userId);
-    
-    if (profileError) {
-      console.error('Error deleting user profile:', profileError);
-      alert('Failed to delete user. Please try again.');
-      setUpdating(null);
-      return;
+    try {
+      // Delete user's appointments
+      await supabase
+        .from('appointments')
+        .delete()
+        .eq('user_id', userId);
+      
+      // Delete user's tasks
+      await supabase
+        .from('tasks')
+        .delete()
+        .eq('user_id', userId);
+      
+      // Delete user's metrics
+      await supabase
+        .from('metrics')
+        .delete()
+        .eq('user_id', userId);
+      
+      // Delete user's weekly overviews
+      await supabase
+        .from('weekly_overviews')
+        .delete()
+        .eq('user_id', userId);
+      
+      // Finally delete user profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+      
+      if (profileError) {
+        console.error('Error deleting user profile:', profileError);
+        alert('Failed to delete user profile. Please try again.');
+        setUpdating(null);
+        return;
+      }
+      
+      // Remove user from local state
+      setUsers(users.filter(u => u.id !== userId));
+    } catch (error) {
+      console.error('Error deleting user data:', error);
+      alert('Failed to delete user data. Please try again.');
     }
     
-    // Delete user's appointments
-    await supabase
-      .from('appointments')
-      .delete()
-      .eq('user_id', userId);
-    
-    // Remove user from local state
-    setUsers(users.filter(u => u.id !== userId));
     setUpdating(null);
   };
 
