@@ -1,7 +1,34 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, FileText, RefreshCw, Users, TrendingUp, Zap, Tag, ChevronRight } from 'lucide-react';
+import { Sparkles, FileText, RefreshCw, Users, TrendingUp, Zap, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const CAROUSEL_IMAGES = [
+  '/1.png',
+  '/2.png',
+  '/3.png',
+  '/4.png',
+  '/5.png',
+  '/6.png'
+];
 
 const LandingPage = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % CAROUSEL_IMAGES.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % CAROUSEL_IMAGES.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + CAROUSEL_IMAGES.length) % CAROUSEL_IMAGES.length);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white font-sans text-slate-800">
       {/* Header */}
@@ -62,7 +89,7 @@ const LandingPage = () => {
             </a>
           </div>
 
-          {/* App Preview/Mockup */}
+          {/* Carousel */}
           <div className="relative mx-auto max-w-4xl">
             <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-transparent z-10 pointer-events-none" />
             <div className="relative bg-white border border-slate-200 rounded-xl p-2 shadow-2xl shadow-slate-300/50">
@@ -77,11 +104,52 @@ const LandingPage = () => {
                     <span className="text-xs text-slate-500">SpeedPlan</span>
                   </div>
                 </div>
-                <img 
-                  src="/mockupapp.png" 
-                  alt="Speed Planner Dashboard" 
-                  className="w-full"
-                />
+                
+                {/* Carousel Container */}
+                <div className="relative overflow-hidden">
+                  <div 
+                    className="flex transition-transform duration-500 ease-in-out"
+                    style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                  >
+                    {CAROUSEL_IMAGES.map((src, index) => (
+                      <img 
+                        key={index}
+                        src={src} 
+                        alt={`SpeedPlan Screenshot ${index + 1}`} 
+                        className="w-full flex-shrink-0"
+                      />
+                    ))}
+                  </div>
+
+                  {/* Navigation Arrows */}
+                  <button 
+                    onClick={prevSlide}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all"
+                  >
+                    <ChevronLeft size={20} className="text-slate-700" />
+                  </button>
+                  <button 
+                    onClick={nextSlide}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all"
+                  >
+                    <ChevronRight size={20} className="text-slate-700" />
+                  </button>
+                </div>
+
+                {/* Dots Indicator */}
+                <div className="flex justify-center gap-2 py-3 bg-slate-100">
+                  {CAROUSEL_IMAGES.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentSlide(index)}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        currentSlide === index 
+                          ? 'bg-blue-600 w-6' 
+                          : 'bg-slate-300 hover:bg-slate-400'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
