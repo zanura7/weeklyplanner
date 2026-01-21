@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, Loader2 } from 'lucide-react';
+import { Zap, Loader2 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -54,48 +54,51 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      <div className="bg-slate-800/80 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-700/50">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center p-4">
+      {/* Background glow */}
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-blue-100 rounded-full blur-[120px] pointer-events-none" />
+      
+      <div className="relative bg-white rounded-2xl shadow-xl shadow-slate-200/50 w-full max-w-md overflow-hidden border border-slate-200">
         {/* Header */}
-        <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-8 sm:p-10 text-center rounded-b-[2rem]">
+        <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-8 sm:p-10 text-center">
           <Link to="/" className="inline-block">
-            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Calendar className="text-white" size={32} />
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Zap className="text-white" size={28} />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Speed Planner</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">SpeedPlan</h1>
           </Link>
-          <p className="text-blue-200 text-sm">Track your activities & grow</p>
+          <p className="text-blue-200 text-sm">Sign in to your account</p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-5">
           {isForgotPassword ? (
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Email</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="w-full p-3.5 bg-slate-700/50 border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
               />
             </div>
           ) : (
             <>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Email</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full p-3.5 bg-slate-700/50 border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Password</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Password</label>
                 <input
                   type="password"
                   value={password}
@@ -103,20 +106,20 @@ const LoginPage = () => {
                   placeholder="••••••••"
                   required
                   minLength={6}
-                  className="w-full p-3.5 bg-slate-700/50 border border-slate-600 rounded-xl text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
+                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all outline-none"
                 />
               </div>
             </>
           )}
 
           {error && (
-            <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-400 text-sm font-medium">
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-medium">
               {error}
             </div>
           )}
 
           {message && (
-            <div className="p-3 bg-green-500/20 border border-green-500/50 rounded-xl text-green-400 text-sm font-medium">
+            <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-600 text-sm font-medium">
               {message}
             </div>
           )}
@@ -124,7 +127,7 @@ const LoginPage = () => {
           <button 
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-500 font-bold py-3.5 px-6 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-blue-600/30"
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 font-semibold py-3.5 px-6 rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-blue-600/20"
           >
             {loading ? <Loader2 size={18} className="animate-spin" /> : null}
             {isForgotPassword ? 'Send Reset Link' : 'Sign In'}
@@ -133,15 +136,15 @@ const LoginPage = () => {
           <div className="flex items-center justify-center gap-4 pt-2">
             <Link 
               to="/register"
-              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
             >
               Sign Up
             </Link>
-            <span className="text-slate-600">|</span>
+            <span className="text-slate-300">|</span>
             <button 
               type="button"
               onClick={() => { setIsForgotPassword(!isForgotPassword); setError(''); setMessage(''); }}
-              className="text-slate-500 hover:text-slate-400 text-sm font-medium transition-colors"
+              className="text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors"
             >
               {isForgotPassword ? 'Back to Sign In' : 'Forgot Password?'}
             </button>
