@@ -34,7 +34,7 @@ const RegisterPage = () => {
     setMessage('');
 
     try {
-      const { error } = await supabase.auth.signUp({ 
+      const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: {
@@ -45,7 +45,28 @@ const RegisterPage = () => {
         }
       });
       if (error) throw error;
-      setMessage('Check your email for confirmation link! Your account will be reviewed by admin.');
+
+      // Create profile in profiles table
+      if (data?.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            email: email,
+            username: username,
+            mobile: mobile,
+            role: 'user',
+            status: 'pending',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+        }
+      }
+
+      setMessage('Registration successful! Please wait for admin approval before logging in.');
     } catch (err) {
       setError(err.message);
     } finally {
