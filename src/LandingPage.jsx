@@ -91,7 +91,6 @@ const LandingPage = () => {
 
           {/* Carousel */}
           <div className="relative mx-auto max-w-4xl">
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-transparent to-transparent z-10 pointer-events-none" />
             <div className="relative bg-white border border-slate-200 rounded-xl p-2 shadow-2xl shadow-slate-300/50">
               <div className="bg-slate-100 rounded-lg overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-3 bg-slate-200 border-b border-slate-300">
