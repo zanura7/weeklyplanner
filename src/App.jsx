@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, X, ChevronLeft, ChevronRight, Save, Trash2, Sparkles, Loader2, LogOut, User, Download, Calendar, Shield, Users, Check, Ban, Clock, Search, RefreshCw } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
@@ -1305,6 +1306,7 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
 };
 
 export default function App() {
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -2401,7 +2403,8 @@ export default function App() {
   }
 
   if (!user) {
-    return <LoginScreen onLogin={() => {}} />;
+    navigate('/login');
+    return null;
   }
 
   // Check user profile status (only if profile exists)
