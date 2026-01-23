@@ -3225,6 +3225,7 @@ export default function App() {
         }).join('')}
       </tbody>
     </table>
+    ` : '<p style="text-align: center; color: #6b7280; padding: 40px 20px;">No activities scheduled for this week.</p>'}
       </section>
 
       <section aria-labelledby="distribution-heading" role="region">
