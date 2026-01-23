@@ -786,7 +786,7 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
 
   const fetchUsers = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('profiles')
       .select('*')
       .order('created_at', { ascending: false });
@@ -805,7 +805,7 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
 
   const handleUpdateStatus = async (userId, newStatus) => {
     setUpdating(userId);
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('profiles')
       .update({ status: newStatus, updated_at: new Date().toISOString() })
       .eq('id', userId);
