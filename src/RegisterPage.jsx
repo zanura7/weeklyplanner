@@ -75,13 +75,13 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
       {/* Background glow */}
       <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-emerald-100 rounded-full blur-[120px] pointer-events-none" />
       
       <div className="relative bg-white rounded-2xl shadow-xl shadow-slate-200/50 w-full max-w-md overflow-hidden border border-slate-200">
         {/* Header */}
-        <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 p-8 sm:p-10 text-center">
+        <div className="bg-emerald-600 p-8 sm:p-10 text-center">
           <Link to="/" className="inline-block">
             <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mx-auto mb-4">
               <Zap className="text-white" size={28} />

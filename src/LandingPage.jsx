@@ -30,7 +30,7 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white font-sans text-slate-800">
+    <div className="min-h-screen bg-white font-sans text-slate-800">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
@@ -166,7 +166,7 @@ const LandingPage = () => {
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Feature 1 */}
-            <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-2xl border border-blue-100 hover:border-blue-300 hover:shadow-lg transition-all group">
+            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 hover:border-blue-300 hover:shadow-lg transition-all group">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-5">
                 <Sparkles className="text-blue-600" size={24} />
               </div>
@@ -177,7 +177,7 @@ const LandingPage = () => {
             </div>
             
             {/* Feature 2 */}
-            <div className="bg-gradient-to-br from-cyan-50 to-white p-6 rounded-2xl border border-cyan-100 hover:border-cyan-300 hover:shadow-lg transition-all group">
+            <div className="bg-cyan-50 p-6 rounded-2xl border border-cyan-100 hover:border-cyan-300 hover:shadow-lg transition-all group">
               <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center mb-5">
                 <Tag className="text-cyan-600" size={24} />
               </div>
@@ -188,7 +188,7 @@ const LandingPage = () => {
             </div>
             
             {/* Feature 3 */}
-            <div className="bg-gradient-to-br from-purple-50 to-white p-6 rounded-2xl border border-purple-100 hover:border-purple-300 hover:shadow-lg transition-all group">
+            <div className="bg-purple-50 p-6 rounded-2xl border border-purple-100 hover:border-purple-300 hover:shadow-lg transition-all group">
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-5">
                 <FileText className="text-purple-600" size={24} />
               </div>
@@ -199,7 +199,7 @@ const LandingPage = () => {
             </div>
             
             {/* Feature 4 */}
-            <div className="bg-gradient-to-br from-emerald-50 to-white p-6 rounded-2xl border border-emerald-100 hover:border-emerald-300 hover:shadow-lg transition-all group">
+            <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 hover:border-emerald-300 hover:shadow-lg transition-all group">
               <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-5">
                 <RefreshCw className="text-emerald-600" size={24} />
               </div>

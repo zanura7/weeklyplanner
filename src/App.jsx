@@ -709,9 +709,9 @@ const ActivityCategoriesPanel = () => {
 
 const PendingApprovalScreen = ({ onLogout, userEmail }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl w-full max-w-md overflow-hidden text-center">
-        <div className="bg-gradient-to-br from-amber-400 to-amber-500 p-8 sm:p-10">
+        <div className="bg-amber-400 p-8 sm:p-10">
           <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Loader2 className="text-white animate-spin" size={32} />
           </div>
@@ -740,9 +740,9 @@ const PendingApprovalScreen = ({ onLogout, userEmail }) => {
 
 const AccessDeniedScreen = ({ onLogout, userEmail, reason }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-red-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl w-full max-w-md overflow-hidden text-center">
-        <div className="bg-gradient-to-br from-red-500 to-red-600 p-8 sm:p-10">
+        <div className="bg-red-500 p-8 sm:p-10">
           <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <X className="text-white" size={32} />
           </div>
