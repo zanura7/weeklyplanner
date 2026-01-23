@@ -820,7 +820,7 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
 
   const handleUpdateRole = async (userId, newRole) => {
     setUpdating(userId);
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('profiles')
       .update({ role: newRole, updated_at: new Date().toISOString() })
       .eq('id', userId);
@@ -835,7 +835,7 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
 
   const handleUpdateExpiry = async (userId, expiryDate) => {
     setUpdating(userId);
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('profiles')
       .update({ expiry_date: expiryDate || null, updated_at: new Date().toISOString() })
       .eq('id', userId);
@@ -857,31 +857,31 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
     
     try {
       // Delete user's appointments
-      await supabase
+      await getSupabase()
         .from('appointments')
         .delete()
         .eq('user_id', userId);
       
       // Delete user's tasks
-      await supabase
+      await getSupabase()
         .from('tasks')
         .delete()
         .eq('user_id', userId);
       
       // Delete user's metrics
-      await supabase
+      await getSupabase()
         .from('metrics')
         .delete()
         .eq('user_id', userId);
       
       // Delete user's weekly overviews
-      await supabase
+      await getSupabase()
         .from('weekly_overviews')
         .delete()
         .eq('user_id', userId);
       
       // Finally delete user profile
-      const { error: profileError } = await supabase
+      const { error: profileError } = await getSupabase()
         .from('profiles')
         .delete()
         .eq('id', userId);
@@ -1246,7 +1246,7 @@ export default function App() {
         setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
       );
       
-      const fetchPromise = supabase
+      const fetchPromise = getSupabase()
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -1324,7 +1324,7 @@ export default function App() {
     if (!user) return;
 
     const loadData = async () => {
-      const { data: apptData } = await supabase
+      const { data: apptData } = await getSupabase()
         .from('appointments')
         .select('*')
         .eq('user_id', user.id);
@@ -1428,7 +1428,7 @@ export default function App() {
           
           // Delete old records and insert new ones in database
           if (oldKeysToDelete.length > 0) {
-            const { error: deleteError } = await supabase
+            const { error: deleteError } = await getSupabase()
               .from('appointments')
               .delete()
               .eq('user_id', user.id)
@@ -1440,7 +1440,7 @@ export default function App() {
           }
           
           if (newRecords.length > 0) {
-            const { error: insertError } = await supabase
+            const { error: insertError } = await getSupabase()
               .from('appointments')
               .upsert(newRecords, { onConflict: 'user_id,slot_key' });
             
@@ -1455,7 +1455,7 @@ export default function App() {
         setAppointments(apptObj);
       }
 
-      const { data: taskData } = await supabase
+      const { data: taskData } = await getSupabase()
         .from('tasks')
         .select('*')
         .eq('user_id', user.id);
@@ -1466,7 +1466,7 @@ export default function App() {
         setDailyTasks(taskObj);
       }
 
-      const { data: metricData } = await supabase
+      const { data: metricData } = await getSupabase()
         .from('metrics')
         .select('*')
         .eq('user_id', user.id);
@@ -1485,7 +1485,7 @@ export default function App() {
         setMetrics(metricObj);
       }
 
-      const { data: overviewData } = await supabase
+      const { data: overviewData } = await getSupabase()
         .from('weekly_overviews')
         .select('*')
         .eq('user_id', user.id);
@@ -1506,7 +1506,7 @@ export default function App() {
 
     loadData();
 
-    const apptChannel = supabase
+    const apptChannel = getSupabase()
       .channel('appointments')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments', filter: `user_id=eq.${user.id}` }, (payload) => {
         if (payload.eventType === 'DELETE') {
@@ -1536,12 +1536,12 @@ export default function App() {
       })
       .subscribe();
 
-    const taskChannel = supabase
+    const taskChannel = getSupabase()
       .channel('tasks')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `user_id=eq.${user.id}` }, (payload) => {
         if (payload.eventType === 'DELETE') {
           setDailyTasks(prev => {
-            const newTasks = { ...prev };
+            const newTasks = { prev };
             delete newTasks[payload.old.day_key];
             return newTasks;
           });
@@ -1551,7 +1551,7 @@ export default function App() {
       })
       .subscribe();
 
-    const metricChannel = supabase
+    const metricChannel = getSupabase()
       .channel('metrics')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'metrics', filter: `user_id=eq.${user.id}` }, (payload) => {
         if (payload.eventType === 'DELETE') {
@@ -1576,7 +1576,7 @@ export default function App() {
       })
       .subscribe();
 
-    const overviewChannel = supabase
+    const overviewChannel = getSupabase()
       .channel('weekly_overviews')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_overviews', filter: `user_id=eq.${user.id}` }, (payload) => {
         if (payload.eventType === 'DELETE') {
@@ -1629,7 +1629,7 @@ export default function App() {
     }));
 
     try {
-      await supabase
+      await getSupabase()
         .from('weekly_overviews')
         .upsert(update, { onConflict: 'user_id,week_key' });
     } catch (e) {
@@ -3529,7 +3529,7 @@ export default function App() {
     if (!editId || !user) return;
     
     // Delete from database first
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('appointments')
       .delete()
       .eq('user_id', user.id)
