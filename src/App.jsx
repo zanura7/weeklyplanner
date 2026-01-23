@@ -415,7 +415,8 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
       Here is the data for the week:
       - Total Hours Logged: ${stats.totalHours}
       - Income Generating Hours: ${stats.catCounts.income}
-      - Supporting/Admin Hours: ${stats.catCounts.supporting}
+      - Servicing Hours: ${stats.catCounts.servicing}
+      - Networking Hours: ${stats.catCounts.networking}
       - Self Development Hours: ${stats.catCounts.self_dev}
       - Personal Hours: ${stats.catCounts.personal}
       
@@ -1677,128 +1678,1605 @@ export default function App() {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Coach Overview - ${currentYear} ${weekKey}</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f5f5f7; padding: 40px; color: #1d1d1f; }
-    .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-    h1 { color: #1d1d1f; margin-bottom: 5px; letter-spacing: -0.02em; }
-    .subtitle { color: #86868b; font-size: 14px; margin-bottom: 40px; }
-    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px; }
-    .metric-card { border: 1px solid #f0f0f0; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
-    .metric-label { color: #86868b; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
-    .metric-value { color: #1d1d1f; font-size: 36px; font-weight: 700; letter-spacing: -0.02em; }
-    .section-title { color: #1d1d1f; font-size: 16px; font-weight: 600; margin-bottom: 20px; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; margin-top: 40px; }
-    .bar-item { margin-bottom: 20px; }
-    .bar-header { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px; color: #1d1d1f; font-weight: 500; }
-    .bar-bg { background: #f5f5f7; height: 10px; border-radius: 5px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 5px; }
-    .coach-box { background: #fbfbfd; border: 1px solid #f0f0f0; padding: 30px; border-radius: 16px; color: #1d1d1f; margin-top: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
-    .coach-title { font-weight: 600; font-size: 18px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; letter-spacing: -0.01em; }
-    .coach-content { line-height: 1.6; white-space: pre-line; font-size: 15px; color: #424245; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
-    th { text-align: left; padding: 12px; border-bottom: 2px solid #e5e7eb; color: #6b7280; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; }
-    td { padding: 12px; border-bottom: 1px solid #f3f4f6; color: #374151; vertical-align: top; }
-    tr:last-child td { border-bottom: none; }
-    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
-    .footer { margin-top: 50px; text-align: center; color: #86868b; font-size: 12px; }
+    /* CSS Custom Properties for consistent spacing and colors */
+    :root {
+      --color-primary: #1d1d1f;
+      --color-secondary: #86868b;
+      --color-background: #f5f5f7;
+      --color-surface: #ffffff;
+      --color-border: #f0f0f0;
+      --color-border-light: #f3f4f6;
+      --color-text-muted: #6b7280;
+      --color-text-light: #9ca3af;
+      
+      --spacing-xs: 8px;
+      --spacing-sm: 12px;
+      --spacing-md: 16px;
+      --spacing-lg: 20px;
+      --spacing-xl: 24px;
+      --spacing-2xl: 32px;
+      --spacing-3xl: 40px;
+      
+      --border-radius-sm: 8px;
+      --border-radius-md: 12px;
+      --border-radius-lg: 16px;
+      --border-radius-xl: 20px;
+      
+      /* Responsive font sizes using clamp() for optimal mobile readability */
+      --font-size-xs: clamp(10px, 2.5vw, 11px);
+      --font-size-sm: clamp(11px, 3vw, 12px);
+      --font-size-base: clamp(14px, 3.5vw, 16px);
+      --font-size-lg: clamp(16px, 4vw, 18px);
+      --font-size-xl: clamp(18px, 4.5vw, 20px);
+      --font-size-2xl: clamp(20px, 5vw, 24px);
+      --font-size-3xl: clamp(24px, 6vw, 28px);
+      --font-size-4xl: clamp(28px, 7vw, 36px);
+      
+      /* Enhanced line heights for better mobile readability */
+      --line-height-tight: 1.25;
+      --line-height-normal: 1.6;
+      --line-height-relaxed: 1.7;
+      
+      /* Minimum touch target sizes for accessibility */
+      --touch-target-min: 44px;
+      --touch-target-comfortable: 48px;
+    }
+
+    /* Mobile-first base styles */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--color-background);
+      color: var(--color-primary);
+      margin: 0;
+      padding: var(--spacing-lg);
+      font-size: var(--font-size-base);
+      line-height: var(--line-height-normal);
+      -webkit-text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      /* Ensure minimum font size for mobile readability */
+      min-height: 100vh;
+      text-rendering: optimizeLegibility;
+    }
+
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+      background: var(--color-surface);
+      padding: var(--spacing-lg);
+      border-radius: var(--border-radius-md);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    h1 {
+      color: var(--color-primary);
+      margin-bottom: var(--spacing-sm);
+      letter-spacing: -0.02em;
+      font-size: var(--font-size-2xl);
+      line-height: var(--line-height-tight);
+      font-weight: 700;
+      /* Enhanced mobile readability */
+      word-wrap: break-word;
+      hyphens: auto;
+    }
+
+    .subtitle {
+      color: var(--color-secondary);
+      font-size: var(--font-size-sm);
+      margin-bottom: var(--spacing-2xl);
+      line-height: var(--line-height-normal);
+      /* Improved mobile spacing */
+      word-wrap: break-word;
+    }
+
+    /* Mobile-first metrics grid - single column on mobile */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-2xl);
+    }
+
+    .metric-card {
+      border: 1px solid var(--color-border);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      /* Enhanced mobile touch targets */
+      min-height: var(--touch-target-min);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .metric-label {
+      color: var(--color-secondary);
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--spacing-xs);
+      /* Enhanced mobile readability */
+      line-height: var(--line-height-normal);
+    }
+
+    .metric-value {
+      color: var(--color-primary);
+      font-size: var(--font-size-3xl);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: var(--line-height-tight);
+      /* Improved mobile spacing */
+      margin-top: var(--spacing-xs);
+    }
+
+    .section-title {
+      color: var(--color-primary);
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      margin-bottom: var(--spacing-lg);
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: var(--spacing-sm);
+      margin-top: var(--spacing-2xl);
+      /* Enhanced mobile readability */
+      line-height: var(--line-height-normal);
+      word-wrap: break-word;
+    }
+
+    .bar-item {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .bar-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: var(--font-size-base);
+      margin-bottom: var(--spacing-xs);
+      color: var(--color-primary);
+      font-weight: 500;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs);
+      /* Enhanced mobile readability */
+      line-height: var(--line-height-normal);
+      word-wrap: break-word;
+    }
+
+    .bar-bg {
+      background: var(--color-background);
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 5px;
+    }
+
+    .coach-box {
+      background: #fbfbfd;
+      border: 1px solid var(--color-border);
+      padding: var(--spacing-lg);
+      border-radius: var(--border-radius-lg);
+      color: var(--color-primary);
+      margin-top: var(--spacing-xl);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .coach-title {
+      font-weight: 600;
+      font-size: var(--font-size-lg);
+      margin-bottom: var(--spacing-md);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      letter-spacing: -0.01em;
+      line-height: var(--line-height-tight);
+      /* Enhanced mobile readability */
+      word-wrap: break-word;
+    }
+
+    .coach-content {
+      line-height: var(--line-height-relaxed);
+      white-space: pre-line;
+      font-size: var(--font-size-base);
+      color: #424245;
+      /* Enhanced mobile readability */
+      word-wrap: break-word;
+      hyphens: auto;
+    }
+
+    /* Mobile-optimized table styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: var(--spacing-lg);
+      font-size: var(--font-size-sm);
+    }
+
+    th {
+      text-align: left;
+      padding: var(--spacing-sm);
+      border-bottom: 2px solid #e5e7eb;
+      color: var(--color-text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: var(--font-size-xs);
+      letter-spacing: 0.05em;
+      background: var(--color-surface);
+      /* Enhanced mobile readability */
+      line-height: var(--line-height-normal);
+    }
+
+    td {
+      padding: var(--spacing-sm);
+      border-bottom: 1px solid var(--color-border-light);
+      color: #374151;
+      vertical-align: top;
+      word-wrap: break-word;
+      background: var(--color-surface);
+      /* Enhanced mobile readability */
+      line-height: var(--line-height-normal);
+      hyphens: auto;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Mobile-responsive table-to-cards transformation */
+    @media (max-width: 767px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      
+      thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+      
+      tr {
+        border: 1px solid var(--color-border);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: var(--spacing-lg);
+        padding: var(--spacing-lg);
+        background: var(--color-surface);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        /* Enhanced mobile touch targets */
+        min-height: var(--touch-target-min);
+      }
+      
+      td {
+        border: none;
+        position: relative;
+        padding: var(--spacing-sm) 0;
+        padding-left: 40%;
+        text-align: left;
+        word-wrap: break-word;
+        hyphens: auto;
+        /* Enhanced mobile readability */
+        line-height: var(--line-height-normal);
+        font-size: var(--font-size-sm);
+        /* Minimum touch target for interactive content */
+        min-height: calc(var(--touch-target-min) * 0.6);
+      }
+      
+      td:before {
+        content: attr(data-label) ": ";
+        position: absolute;
+        left: 0;
+        width: 35%;
+        padding-right: var(--spacing-xs);
+        white-space: nowrap;
+        font-weight: 600;
+        color: var(--color-text-muted);
+        font-size: var(--font-size-xs);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        line-height: var(--line-height-normal);
+        /* Enhanced mobile readability */
+        word-wrap: break-word;
+      }
+      
+      td:first-child {
+        padding-top: 0;
+        font-weight: 600;
+        color: var(--color-primary);
+        font-size: var(--font-size-base);
+        /* Enhanced mobile readability */
+        line-height: var(--line-height-tight);
+      }
+      
+      td:first-child:before {
+        font-weight: 600;
+        color: var(--color-text-muted);
+      }
+      
+      td:last-child {
+        padding-bottom: 0;
+      }
+      
+      /* Ensure category tags remain styled properly in mobile cards */
+      td .tag {
+        display: inline-block;
+        margin-top: 2px;
+        /* Enhanced mobile touch targets */
+        min-height: calc(var(--touch-target-min) * 0.5);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        line-height: var(--line-height-normal);
+      }
+    }
+
+    .tag {
+      display: inline-block;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: var(--border-radius-sm);
+      font-size: var(--font-size-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      /* Enhanced mobile touch targets and readability */
+      min-height: calc(var(--touch-target-min) * 0.5);
+      line-height: var(--line-height-normal);
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .footer {
+      margin-top: var(--spacing-3xl);
+      text-align: center;
+      color: var(--color-secondary);
+      font-size: var(--font-size-sm);
+      padding-top: var(--spacing-lg);
+    }
+
+    /* Smooth transitions for responsive elements */
+    .metrics-grid,
+    .metric-card,
+    .container,
+    .coach-box,
+    table,
+    th,
+    td {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Mobile landscape orientation adjustments */
+    @media (max-width: 767px) and (orientation: landscape) {
+      body {
+        padding: var(--spacing-sm) var(--spacing-lg);
+      }
+      
+      .container {
+        padding: var(--spacing-sm) var(--spacing-lg);
+      }
+      
+      h1 {
+        font-size: var(--font-size-xl);
+        margin-bottom: var(--spacing-xs);
+      }
+      
+      .subtitle {
+        margin-bottom: var(--spacing-lg);
+      }
+      
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-lg);
+      }
+      
+      .metric-card {
+        padding: var(--spacing-sm);
+      }
+      
+      .metric-value {
+        font-size: var(--font-size-2xl);
+      }
+      
+      .section-title {
+        margin-top: var(--spacing-lg);
+        margin-bottom: var(--spacing-sm);
+      }
+      
+      .coach-box {
+        padding: var(--spacing-sm);
+      }
+    }
+
+    /* Additional mobile landscape table optimizations */
+    @media (max-width: 767px) and (orientation: landscape) {
+      /* Optimize table cards for landscape - only apply to mobile card layout */
+      tr {
+        margin-bottom: var(--spacing-sm) !important;
+        padding: var(--spacing-sm) !important;
+      }
+      
+      td {
+        padding: var(--spacing-xs) 0 !important;
+        padding-left: 35% !important;
+      }
+      
+      td:before {
+        width: 30% !important;
+      }
+    }
+
+    /* Tablet breakpoint - 768px and up */
+    @media (min-width: 768px) {
+      body {
+        padding: var(--spacing-2xl);
+      }
+
+      .container {
+        padding: var(--spacing-2xl);
+        border-radius: var(--border-radius-lg);
+        max-width: 800px;
+      }
+
+      h1 {
+        font-size: var(--font-size-3xl);
+      }
+
+      .subtitle {
+        font-size: var(--font-size-base);
+        margin-bottom: var(--spacing-3xl);
+      }
+
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-3xl);
+      }
+
+      .coach-box {
+        padding: var(--spacing-xl);
+      }
+
+      .coach-title {
+        font-size: var(--font-size-xl);
+      }
+
+      .section-title {
+        margin-top: var(--spacing-3xl);
+      }
+    }
+
+    /* Tablet landscape orientation optimizations */
+    @media (min-width: 768px) and (max-width: 1023px) and (orientation: landscape) {
+      .container {
+        max-width: 900px;
+      }
+      
+      .metrics-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--spacing-md);
+      }
+      
+      .metric-card {
+        padding: var(--spacing-md);
+      }
+      
+      .metric-value {
+        font-size: var(--font-size-3xl);
+      }
+    }
+
+    /* Desktop breakpoint - 1024px and up */
+    @media (min-width: 1024px) {
+      body {
+        padding: var(--spacing-3xl);
+      }
+
+      .container {
+        padding: var(--spacing-3xl);
+        border-radius: var(--border-radius-xl);
+      }
+
+      .metrics-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .metric-value {
+        font-size: var(--font-size-4xl);
+      }
+
+      .coach-box {
+        padding: var(--spacing-2xl);
+      }
+
+      table {
+        font-size: var(--font-size-sm);
+      }
+
+      th, td {
+        padding: var(--spacing-sm);
+      }
+    }
+
+    /* Large desktop breakpoint - 1440px and up */
+    @media (min-width: 1440px) {
+      .container {
+        max-width: 1200px;
+        padding: var(--spacing-3xl) calc(var(--spacing-3xl) * 1.5);
+      }
+      
+      .metrics-grid {
+        gap: var(--spacing-xl);
+      }
+      
+      .metric-card {
+        padding: var(--spacing-xl);
+      }
+    }
+
+    /* High DPI displays optimization */
+    @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+      body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+      
+      .metric-card {
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      }
+      
+      .container {
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      }
+    }
+
+    /* Reduced motion preference support */
+    @media (prefers-reduced-motion: reduce) {
+      .metrics-grid,
+      .metric-card,
+      .container,
+      .coach-box,
+      table,
+      th,
+      td {
+        transition: none;
+      }
+    }
+
+    /* High contrast mode support for accessibility */
+    @media (prefers-contrast: high) {
+      :root {
+        --color-primary: #000000;
+        --color-secondary: #333333;
+        --color-background: #ffffff;
+        --color-surface: #ffffff;
+        --color-border: #000000;
+        --color-border-light: #333333;
+        --color-text-muted: #000000;
+        --color-text-light: #333333;
+      }
+
+      body {
+        background: #ffffff;
+        color: #000000;
+        border: 2px solid #000000;
+      }
+
+      .container {
+        background: #ffffff;
+        border: 3px solid #000000;
+        box-shadow: none;
+      }
+
+      .metric-card {
+        background: #ffffff !important;
+        border: 2px solid #000000 !important;
+        color: #000000 !important;
+        box-shadow: none;
+      }
+
+      .metric-label {
+        color: #000000 !important;
+      }
+
+      .metric-value {
+        color: #000000 !important;
+      }
+
+      .section-title {
+        color: #000000;
+        border-bottom: 2px solid #000000;
+      }
+
+      .bar-bg {
+        background: #ffffff;
+        border: 1px solid #000000;
+      }
+
+      .bar-fill {
+        background: #000000 !important;
+      }
+
+      .coach-box {
+        background: #ffffff;
+        border: 2px solid #000000;
+        color: #000000;
+        box-shadow: none;
+      }
+
+      .coach-title {
+        color: #000000 !important;
+      }
+
+      .coach-content {
+        color: #000000;
+      }
+
+      table {
+        border: 2px solid #000000;
+      }
+
+      th {
+        background: #ffffff;
+        color: #000000;
+        border-bottom: 2px solid #000000;
+      }
+
+      td {
+        background: #ffffff;
+        color: #000000;
+        border-bottom: 1px solid #000000;
+      }
+
+      tr {
+        border: 2px solid #000000 !important;
+        background: #ffffff !important;
+      }
+
+      .tag {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border: 2px solid #000000 !important;
+      }
+
+      .footer {
+        color: #000000;
+      }
+    }
+
+    /* Focus management for keyboard navigation */
+    *:focus {
+      outline: 3px solid #005fcc;
+      outline-offset: 2px;
+    }
+
+    /* Enhanced focus for high contrast mode */
+    @media (prefers-contrast: high) {
+      *:focus {
+        outline: 4px solid #000000;
+        outline-offset: 2px;
+      }
+    }
+
+    /* Screen reader only content */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Skip link for keyboard navigation */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 6px;
+      background: #000000;
+      color: #ffffff;
+      padding: 8px;
+      text-decoration: none;
+      border-radius: 4px;
+      z-index: 1000;
+      font-weight: bold;
+    }
+
+    .skip-link:focus {
+      top: 6px;
+    }
+
+    /* Ensure proper heading hierarchy for screen readers */
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: bold;
+      margin-top: 1em;
+      margin-bottom: 0.5em;
+    }
+
+    h1 {
+      font-size: var(--font-size-2xl);
+    }
+
+    h2 {
+      font-size: var(--font-size-xl);
+    }
+
+    h3 {
+      font-size: var(--font-size-lg);
+    }
+
+    /* Ensure interactive elements meet minimum touch target size */
+    button, a, input, select, textarea {
+      min-height: var(--touch-target-min);
+      min-width: var(--touch-target-min);
+    }
+
+    /* Enhanced table accessibility for mobile card layout */
+    @media (max-width: 767px) {
+      /* Ensure mobile cards are properly announced by screen readers */
+      tr {
+        role: article;
+        aria-label: "Activity entry";
+      }
+
+      /* Improve screen reader experience for data labels */
+      td:before {
+        speak: literal;
+        font-weight: 600;
+        color: var(--color-text-muted);
+      }
+
+      /* Ensure proper focus management in mobile card layout */
+      td:focus-within {
+        outline: 2px solid #005fcc;
+        outline-offset: 1px;
+        border-radius: var(--border-radius-sm);
+      }
+    }
+
+    /* Print styles for accessibility */
+    @media print {
+      body {
+        background: white;
+        color: black;
+        font-size: 12pt;
+        line-height: 1.4;
+      }
+
+      .container {
+        box-shadow: none;
+        border: 1px solid black;
+      }
+
+      .metric-card {
+        border: 1px solid black;
+        background: white;
+        color: black;
+        box-shadow: none;
+      }
+
+      .coach-box {
+        border: 1px solid black;
+        background: white;
+        color: black;
+        box-shadow: none;
+      }
+
+      table {
+        border-collapse: collapse;
+      }
+
+      th, td {
+        border: 1px solid black;
+        background: white;
+        color: black;
+      }
+
+      /* Hide decorative elements in print */
+      .skip-link {
+        display: none;
+      }
+    }
+
+    /* ========================================
+       FALLBACK STYLES FOR OLDER MOBILE BROWSERS
+       ======================================== */
+
+    /* Fallback for browsers without CSS Grid support */
+    .metrics-grid {
+      /* Fallback: Use flexbox for older browsers */
+      display: -webkit-box;
+      display: -webkit-flex;
+      display: -ms-flexbox;
+      display: flex;
+      -webkit-box-orient: vertical;
+      -webkit-box-direction: normal;
+      -webkit-flex-direction: column;
+      -ms-flex-direction: column;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-2xl);
+    }
+
+    /* CSS Grid support detection and enhancement */
+    @supports (display: grid) {
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-2xl);
+      }
+    }
+
+    /* Fallback for browsers without CSS custom properties (CSS variables) */
+    .metrics-grid {
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .container {
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    .metric-card {
+      padding: 20px;
+      border-radius: 16px;
+      min-height: 44px;
+    }
+
+    .coach-box {
+      padding: 20px;
+      border-radius: 16px;
+    }
+
+    body {
+      padding: 20px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    h1 {
+      font-size: 24px;
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      font-size: 12px;
+      margin-bottom: 32px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 28px;
+      line-height: 1.25;
+    }
+
+    .section-title {
+      font-size: 18px;
+      margin-bottom: 20px;
+      margin-top: 32px;
+      padding-bottom: 12px;
+    }
+
+    .bar-header {
+      font-size: 16px;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+
+    .coach-title {
+      font-size: 18px;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+
+    .coach-content {
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    table {
+      font-size: 12px;
+      margin-top: 20px;
+    }
+
+    th {
+      padding: 12px;
+      font-size: 11px;
+    }
+
+    td {
+      padding: 12px;
+    }
+
+    .tag {
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      min-height: 22px;
+    }
+
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      font-size: 12px;
+    }
+
+    /* Vendor prefixes for older mobile browsers */
+    .container,
+    .metric-card,
+    .coach-box,
+    .tag,
+    tr {
+      -webkit-border-radius: 12px;
+      -moz-border-radius: 12px;
+      border-radius: 12px;
+    }
+
+    .metric-card,
+    .container,
+    .coach-box {
+      -webkit-box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      -moz-box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    /* Flexbox fallbacks with vendor prefixes */
+    .bar-header {
+      display: -webkit-box;
+      display: -webkit-flex;
+      display: -ms-flexbox;
+      display: flex;
+      -webkit-box-pack: justify;
+      -webkit-justify-content: space-between;
+      -ms-flex-pack: justify;
+      justify-content: space-between;
+      -webkit-flex-wrap: wrap;
+      -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+    }
+
+    .coach-title {
+      display: -webkit-box;
+      display: -webkit-flex;
+      display: -ms-flexbox;
+      display: flex;
+      -webkit-box-align: center;
+      -webkit-align-items: center;
+      -ms-flex-align: center;
+      align-items: center;
+    }
+
+    /* Tablet breakpoint fallbacks */
+    @media (min-width: 768px) {
+      body {
+        padding: 32px;
+      }
+
+      .container {
+        padding: 32px;
+        max-width: 800px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .subtitle {
+        font-size: 16px;
+        margin-bottom: 40px;
+      }
+
+      .coach-box {
+        padding: 24px;
+      }
+
+      .coach-title {
+        font-size: 20px;
+      }
+
+      .section-title {
+        margin-top: 40px;
+      }
+
+      /* Flexbox fallback for tablet 2-column layout */
+      .metrics-grid {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-wrap: wrap;
+        -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 40px;
+      }
+
+      .metric-card {
+        -webkit-box-flex: 1;
+        -webkit-flex: 1 1 calc(50% - 10px);
+        -ms-flex: 1 1 calc(50% - 10px);
+        flex: 1 1 calc(50% - 10px);
+        min-width: calc(50% - 10px);
+      }
+
+      /* CSS Grid enhancement for supported browsers */
+      @supports (display: grid) {
+        .metrics-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 20px;
+          margin-bottom: 40px;
+        }
+
+        .metric-card {
+          flex: none;
+          min-width: auto;
+        }
+      }
+    }
+
+    /* Desktop breakpoint fallbacks */
+    @media (min-width: 1024px) {
+      body {
+        padding: 40px;
+      }
+
+      .container {
+        padding: 40px;
+      }
+
+      .metric-value {
+        font-size: 36px;
+      }
+
+      .coach-box {
+        padding: 32px;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      th, td {
+        padding: 12px;
+      }
+
+      /* Flexbox fallback for desktop 4-column layout */
+      .metrics-grid {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-flex-wrap: wrap;
+        -ms-flex-wrap: wrap;
+        flex-wrap: wrap;
+      }
+
+      .metric-card {
+        -webkit-box-flex: 1;
+        -webkit-flex: 1 1 calc(25% - 15px);
+        -ms-flex: 1 1 calc(25% - 15px);
+        flex: 1 1 calc(25% - 15px);
+        min-width: calc(25% - 15px);
+      }
+
+      /* CSS Grid enhancement for supported browsers */
+      @supports (display: grid) {
+        .metrics-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+        }
+
+        .metric-card {
+          flex: none;
+          min-width: auto;
+        }
+      }
+    }
+
+    /* Fallback for browsers without clamp() support */
+    @media (max-width: 767px) {
+      body {
+        font-size: 16px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .metric-value {
+        font-size: 28px;
+      }
+
+      .section-title {
+        font-size: 16px;
+      }
+
+      .coach-title {
+        font-size: 16px;
+      }
+
+      .coach-content {
+        font-size: 14px;
+      }
+
+      table {
+        font-size: 11px;
+      }
+
+      .metric-label {
+        font-size: 10px;
+      }
+
+      .tag {
+        font-size: 10px;
+      }
+
+      .footer {
+        font-size: 11px;
+      }
+    }
+
+    /* Enhanced clamp() support detection */
+    @supports (font-size: clamp(14px, 3.5vw, 16px)) {
+      body {
+        font-size: clamp(14px, 3.5vw, 16px);
+      }
+
+      h1 {
+        font-size: clamp(20px, 5vw, 24px);
+      }
+
+      .metric-value {
+        font-size: clamp(24px, 6vw, 28px);
+      }
+
+      .section-title {
+        font-size: clamp(16px, 4vw, 18px);
+      }
+
+      .coach-title {
+        font-size: clamp(16px, 4.5vw, 18px);
+      }
+
+      .coach-content {
+        font-size: clamp(14px, 3.5vw, 16px);
+      }
+
+      .metric-label {
+        font-size: clamp(10px, 2.5vw, 11px);
+      }
+
+      .tag {
+        font-size: clamp(10px, 2.5vw, 11px);
+      }
+
+      .footer {
+        font-size: clamp(11px, 3vw, 12px);
+      }
+    }
+
+    /* Fallback for browsers without CSS custom properties support */
+    @supports not (color: var(--color-primary)) {
+      body {
+        background: #f5f5f7;
+        color: #1d1d1f;
+      }
+
+      .container {
+        background: #ffffff;
+        border: 1px solid #f0f0f0;
+      }
+
+      .metric-card {
+        border: 1px solid #f0f0f0;
+        background: #ffffff;
+      }
+
+      .section-title {
+        color: #1d1d1f;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .bar-header {
+        color: #1d1d1f;
+      }
+
+      .bar-bg {
+        background: #f5f5f7;
+      }
+
+      .coach-box {
+        background: #fbfbfd;
+        border: 1px solid #f0f0f0;
+        color: #1d1d1f;
+      }
+
+      .coach-title {
+        color: #1d1d1f;
+      }
+
+      .coach-content {
+        color: #424245;
+      }
+
+      th {
+        color: #6b7280;
+        background: #ffffff;
+        border-bottom: 2px solid #e5e7eb;
+      }
+
+      td {
+        color: #374151;
+        background: #ffffff;
+        border-bottom: 1px solid #f3f4f6;
+      }
+
+      tr {
+        border: 1px solid #f0f0f0;
+        background: #ffffff;
+      }
+
+      .footer {
+        color: #86868b;
+      }
+
+      .subtitle {
+        color: #86868b;
+      }
+
+      .metric-label {
+        color: #86868b;
+      }
+
+      .metric-value {
+        color: #1d1d1f;
+      }
+
+      /* Mobile card layout fallback colors */
+      @media (max-width: 767px) {
+        td:before {
+          color: #6b7280;
+        }
+
+        td:first-child {
+          color: #1d1d1f;
+        }
+      }
+    }
+
+    /* Transition fallbacks for older browsers */
+    @supports not (transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)) {
+      .metrics-grid,
+      .metric-card,
+      .container,
+      .coach-box,
+      table,
+      th,
+      td {
+        -webkit-transition: all 0.3s ease;
+        -moz-transition: all 0.3s ease;
+        -o-transition: all 0.3s ease;
+        transition: all 0.3s ease;
+      }
+    }
+
+    /* Legacy mobile browser specific fixes */
+    
+    /* Android 4.x browser fixes */
+    @media screen and (-webkit-min-device-pixel-ratio: 0) and (max-width: 767px) {
+      body {
+        -webkit-text-size-adjust: 100%;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .container {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+      }
+
+      .metric-card {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+      }
+    }
+
+    /* iOS Safari 9-11 fixes */
+    @supports (-webkit-appearance: none) and (not (contain: paint)) {
+      .metrics-grid {
+        display: -webkit-box;
+        display: -webkit-flex;
+        display: flex;
+        -webkit-box-orient: vertical;
+        -webkit-box-direction: normal;
+        -webkit-flex-direction: column;
+        flex-direction: column;
+      }
+
+      @media (min-width: 768px) {
+        .metrics-grid {
+          -webkit-box-orient: horizontal;
+          -webkit-box-direction: normal;
+          -webkit-flex-direction: row;
+          flex-direction: row;
+          -webkit-flex-wrap: wrap;
+          flex-wrap: wrap;
+        }
+      }
+    }
+
+    /* Internet Explorer 11 mobile fixes */
+    @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+      .metrics-grid {
+        display: -ms-flexbox;
+        display: flex;
+        -ms-flex-direction: column;
+        flex-direction: column;
+      }
+
+      .metric-card {
+        -ms-flex: 1 1 auto;
+        flex: 1 1 auto;
+      }
+
+      @media (min-width: 768px) {
+        .metrics-grid {
+          -ms-flex-direction: row;
+          flex-direction: row;
+          -ms-flex-wrap: wrap;
+          flex-wrap: wrap;
+        }
+
+        .metric-card {
+          -ms-flex: 1 1 calc(50% - 10px);
+          flex: 1 1 calc(50% - 10px);
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .metric-card {
+          -ms-flex: 1 1 calc(25% - 15px);
+          flex: 1 1 calc(25% - 15px);
+        }
+      }
+    }
+
+    /* Samsung Internet browser fixes */
+    @media screen and (-webkit-min-device-pixel-ratio: 0) {
+      .container {
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+      }
+
+      .metric-card {
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+      }
+    }
+
+    /* Opera Mini fixes */
+    @media all and (-webkit-min-device-pixel-ratio: 0) and (min-color-index: 0) {
+      .metrics-grid {
+        display: block;
+      }
+
+      .metric-card {
+        display: block;
+        width: 100%;
+        margin-bottom: 16px;
+      }
+
+      @media (min-width: 768px) {
+        .metric-card {
+          display: inline-block;
+          width: calc(50% - 10px);
+          margin-right: 20px;
+          vertical-align: top;
+        }
+
+        .metric-card:nth-child(2n) {
+          margin-right: 0;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .metric-card {
+          width: calc(25% - 15px);
+          margin-right: 20px;
+        }
+
+        .metric-card:nth-child(4n) {
+          margin-right: 0;
+        }
+      }
+    }
+
+    /* UC Browser fixes */
+    @supports (-webkit-touch-callout: none) and (not (-webkit-backdrop-filter: blur(1px))) {
+      body {
+        -webkit-text-size-adjust: 100%;
+      }
+
+      .container {
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Weekly Performance Report</h1>
-    <p class="subtitle"><strong>${user.user_metadata?.username || user.email?.split('@')[0] || 'User'}</strong> | Year: ${currentYear} | Week: ${weekKey} | Generated: ${new Date().toLocaleDateString()}</p>
+  <!-- Skip link for keyboard navigation -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  
+  <div class="container" role="main" id="main-content">
+    <header role="banner">
+      <h1 id="report-title">Weekly Performance Report</h1>
+      <p class="subtitle" role="doc-subtitle" aria-describedby="report-title">
+        <strong>${user.user_metadata?.username || user.email?.split('@')[0] || 'User'}</strong> | 
+        Year: ${currentYear} | Week: ${weekKey} | Generated: ${new Date().toLocaleDateString()}
+      </p>
+    </header>
 
-    <h3 class="section-title" style="margin-top: 0;">Sales Pipeline Metrics</h3>
-    <div class="metrics-grid">
-      <div class="metric-card" style="background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); border: 1px solid #fecdd3; color: #be123c;">
-        <div class="metric-label" style="color: #9f1239;">Open</div>
-        <div class="metric-value">${metricTotals.O}</div>
-      </div>
-      <div class="metric-card" style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 1px solid #ddd6fe; color: #6d28d9;">
-        <div class="metric-label" style="color: #5b21b6;">Present</div>
-        <div class="metric-value">${metricTotals.P}</div>
-      </div>
-      <div class="metric-card" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0; color: #15803d;">
-        <div class="metric-label" style="color: #166534;">Follow</div>
-        <div class="metric-value">${metricTotals.F}</div>
-      </div>
-      <div class="metric-card" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #fde68a; color: #b45309;">
-        <div class="metric-label" style="color: #92400e;">Close</div>
-        <div class="metric-value">${metricTotals.R}</div>
-      </div>
-    </div>
+    <main role="main" aria-labelledby="report-title">
+      <section aria-labelledby="metrics-heading" role="region">
+        <h2 id="metrics-heading" class="section-title" style="margin-top: 0;">Sales Pipeline Metrics</h2>
+        <div class="metrics-grid" role="group" aria-labelledby="metrics-heading">
+          <div class="metric-card" role="img" aria-labelledby="open-metric" style="background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); border: 1px solid #fecdd3; color: #be123c;">
+            <div class="metric-label" style="color: #9f1239;" id="open-metric-label">Open</div>
+            <div class="metric-value" id="open-metric" aria-describedby="open-metric-label">${metricTotals.O}</div>
+            <span class="sr-only">Open metric value is ${metricTotals.O}</span>
+          </div>
+          <div class="metric-card" role="img" aria-labelledby="present-metric" style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border: 1px solid #ddd6fe; color: #6d28d9;">
+            <div class="metric-label" style="color: #5b21b6;" id="present-metric-label">Present</div>
+            <div class="metric-value" id="present-metric" aria-describedby="present-metric-label">${metricTotals.P}</div>
+            <span class="sr-only">Present metric value is ${metricTotals.P}</span>
+          </div>
+          <div class="metric-card" role="img" aria-labelledby="follow-metric" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0; color: #15803d;">
+            <div class="metric-label" style="color: #166534;" id="follow-metric-label">Follow</div>
+            <div class="metric-value" id="follow-metric" aria-describedby="follow-metric-label">${metricTotals.F}</div>
+            <span class="sr-only">Follow metric value is ${metricTotals.F}</span>
+          </div>
+          <div class="metric-card" role="img" aria-labelledby="close-metric" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border: 1px solid #fde68a; color: #b45309;">
+            <div class="metric-label" style="color: #92400e;" id="close-metric-label">Close</div>
+            <div class="metric-value" id="close-metric" aria-describedby="close-metric-label">${metricTotals.R}</div>
+            <span class="sr-only">Close metric value is ${metricTotals.R}</span>
+          </div>
+        </div>
+      </section>
     
-    <h3 class="section-title">Detailed Schedule</h3>
+      <section aria-labelledby="schedule-heading" role="region">
+        <h2 id="schedule-heading" class="section-title">Detailed Schedule</h2>
     ${uniqueAppointments.length > 0 ? `
-    <table>
-      <thead>
-        <tr>
-          <th width="15%">Day / Date</th>
-          <th width="15%">Time</th>
-          <th width="15%">Category</th>
-          <th width="25%">Activity</th>
-          <th width="30%">Details</th>
+    <table role="table" aria-labelledby="schedule-heading" aria-describedby="schedule-description">
+      <caption class="sr-only" id="schedule-description">
+        Weekly schedule showing ${uniqueAppointments.length} activities across different days and times. 
+        On mobile devices, this table transforms into individual activity cards for better readability.
+      </caption>
+      <thead role="rowgroup">
+        <tr role="row">
+          <th role="columnheader" scope="col" width="15%" aria-sort="none">Day / Date</th>
+          <th role="columnheader" scope="col" width="15%" aria-sort="none">Time</th>
+          <th role="columnheader" scope="col" width="15%" aria-sort="none">Category</th>
+          <th role="columnheader" scope="col" width="25%" aria-sort="none">Activity</th>
+          <th role="columnheader" scope="col" width="30%" aria-sort="none">Details</th>
         </tr>
       </thead>
-      <tbody>
-        ${uniqueAppointments.map(appt => {
+      <tbody role="rowgroup">
+        ${uniqueAppointments.map((appt, index) => {
           const dayName = DAYS[appt.dayIndex];
           const dateStr = getDayDate(appt.dayIndex).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' });
           
           let badgeStyle = "background: #f3f4f6; color: #4b5563;";
-          if (appt.category === 'income') badgeStyle = "background: #d1fae5; color: #065f46;";
-          if (appt.category === 'supporting') badgeStyle = "background: #fef3c7; color: #92400e;";
-          if (appt.category === 'self_dev') badgeStyle = "background: #dbeafe; color: #1e40af;";
-          if (appt.category === 'personal') badgeStyle = "background: #ffe4e6; color: #9f1239;";
+          let categoryLabel = "Other";
+          if (appt.category === 'income') {
+            badgeStyle = "background: #d1fae5; color: #065f46;";
+            categoryLabel = "Income Generating";
+          }
+          if (appt.category === 'servicing') {
+            badgeStyle = "background: #fef3c7; color: #92400e;";
+            categoryLabel = "Servicing";
+          }
+          if (appt.category === 'networking') {
+            badgeStyle = "background: #fed7aa; color: #9a3412;";
+            categoryLabel = "Networking";
+          }
+          if (appt.category === 'self_dev') {
+            badgeStyle = "background: #dbeafe; color: #1e40af;";
+            categoryLabel = "Self Development";
+          }
+          if (appt.category === 'personal') {
+            badgeStyle = "background: #ffe4e6; color: #9f1239;";
+            categoryLabel = "Personal";
+          }
 
           return `
-            <tr>
-              <td><strong>${dayName}</strong> <span style="color:#9ca3af; font-size:11px;">${dateStr}</span></td>
-              <td>${appt.startTime} - ${appt.endTime}</td>
-              <td><span class="tag" style="${badgeStyle}">${CATEGORIES[appt.category.toUpperCase()]?.label || appt.category}</span></td>
-              <td style="font-weight: 500;">${appt.activityType}</td>
-              <td style="color: #6b7280; font-style: italic;">${appt.description || '-'}</td>
+            <tr role="row" aria-rowindex="${index + 2}" aria-label="Activity on ${dayName} ${dateStr} from ${appt.startTime} to ${appt.endTime}">
+              <td role="gridcell" data-label="Day/Date" aria-describedby="day-${index}">
+                <span id="day-${index}"><strong>${dayName}</strong> <span style="color:#9ca3af; font-size:11px;" aria-label="Date ${dateStr}">${dateStr}</span></span>
+              </td>
+              <td role="gridcell" data-label="Time" aria-describedby="time-${index}">
+                <span id="time-${index}" aria-label="From ${appt.startTime} to ${appt.endTime}">${appt.startTime} - ${appt.endTime}</span>
+              </td>
+              <td role="gridcell" data-label="Category" aria-describedby="category-${index}">
+                <span class="tag" style="${badgeStyle}" id="category-${index}" role="img" aria-label="Category: ${categoryLabel}">
+                  ${CATEGORIES[appt.category.toUpperCase()]?.label || appt.category}
+                </span>
+              </td>
+              <td role="gridcell" data-label="Activity" style="font-weight: 500;" aria-describedby="activity-${index}">
+                <span id="activity-${index}">${appt.activityType}</span>
+              </td>
+              <td role="gridcell" data-label="Details" style="color: #6b7280; font-style: italic;" aria-describedby="details-${index}">
+                <span id="details-${index}">${appt.description || 'No additional details'}</span>
+              </td>
             </tr>
           `;
         }).join('')}
       </tbody>
     </table>
-    ` : '<p style="color: #9ca3af; font-style: italic;">No activities scheduled for this week.</p>'}
+      </section>
 
-    <h3 class="section-title">Time Distribution</h3>
-    ${Object.values(CATEGORIES).map(cat => {
-      const count = catCounts[cat.id] || 0;
-      const percent = getPercent(count);
-      let colorHex = '#9ca3af'; 
-      if (cat.id === 'income') colorHex = '#34C759';
-      if (cat.id === 'supporting') colorHex = '#FFD60A';
-      if (cat.id === 'self_dev') colorHex = '#007AFF';
-      if (cat.id === 'personal') colorHex = '#FF3B30';
-      
-      return `
-        <div class="bar-item">
-          <div class="bar-header">
-            <strong>${cat.fullLabel}</strong>
-            <span>${count} hrs (${percent}%)</span>
+      <section aria-labelledby="distribution-heading" role="region">
+        <h2 id="distribution-heading" class="section-title">Time Distribution</h2>
+        <div role="group" aria-labelledby="distribution-heading" aria-describedby="distribution-description">
+          <div class="sr-only" id="distribution-description">
+            Time distribution showing hours spent in each activity category with percentage breakdown
           </div>
-          <div class="bar-bg">
-            <div class="bar-fill" style="width: ${percent}%; background-color: ${colorHex};"></div>
-          </div>
+          ${Object.values(CATEGORIES).map((cat, index) => {
+            const count = catCounts[cat.id] || 0;
+            const percent = getPercent(count);
+            let colorHex = '#9ca3af'; 
+            if (cat.id === 'income') colorHex = '#34C759';
+            if (cat.id === 'servicing') colorHex = '#FFD60A';
+            if (cat.id === 'networking') colorHex = '#FF9500';
+            if (cat.id === 'self_dev') colorHex = '#007AFF';
+            if (cat.id === 'personal') colorHex = '#FF3B30';
+            
+            return `
+              <div class="bar-item" role="img" aria-labelledby="bar-${index}" aria-describedby="bar-desc-${index}">
+                <div class="bar-header">
+                  <strong id="bar-${index}">${cat.fullLabel}</strong>
+                  <span id="bar-desc-${index}" aria-label="${count} hours, ${percent} percent">${count} hrs (${percent}%)</span>
+                </div>
+                <div class="bar-bg" role="progressbar" aria-valuenow="${percent}" aria-valuemin="0" aria-valuemax="100" aria-labelledby="bar-${index}">
+                  <div class="bar-fill" style="width: ${percent}%; background-color: ${colorHex};" aria-hidden="true"></div>
+                </div>
+                <span class="sr-only">${cat.fullLabel}: ${count} hours, representing ${percent} percent of total time</span>
+              </div>
+            `;
+          }).join('')}
         </div>
-      `;
-    }).join('')}
+      </section>
 
-    <h3 class="section-title">Analysis & Feedback</h3>
-    
-    <div class="coach-box">
-      <div class="coach-title" style="color: #FF9500;">📝 Coach Remarks</div>
-      <div class="coach-content">${coachRemarksText}</div>
-    </div>
-    
-    <div class="coach-box" style="background: #F0F8FF; border-color: #E1F0FF;">
-      <div class="coach-title" style="color: #007AFF;">✨ AI Performance Coach</div>
-      <div class="coach-content">${aiAnalysisText}</div>
-    </div>
+      <section aria-labelledby="analysis-heading" role="region">
+        <h2 id="analysis-heading" class="section-title">Analysis & Feedback</h2>
+        
+        <article class="coach-box" role="article" aria-labelledby="remarks-heading">
+          <div class="coach-title" style="color: #FF9500;" id="remarks-heading">📝 Coach Remarks</div>
+          <div class="coach-content" role="text" aria-describedby="remarks-heading">${coachRemarksText}</div>
+        </article>
+        
+        <article class="coach-box" style="background: #F0F8FF; border-color: #E1F0FF;" role="article" aria-labelledby="ai-heading">
+          <div class="coach-title" style="color: #007AFF;" id="ai-heading">✨ AI Performance Coach</div>
+          <div class="coach-content" role="text" aria-describedby="ai-heading">${aiAnalysisText}</div>
+        </article>
+      </section>
+    </main>
 
-    <div class="footer">Generated by Speed Planner</div>
+    <footer role="contentinfo" class="footer">
+      <p>Generated by Speed Planner</p>
+    </footer>
   </div>
 </body>
 </html>`;
