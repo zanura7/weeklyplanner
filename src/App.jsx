@@ -5,7 +5,15 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Singleton pattern to prevent multiple Supabase instances
+let supabaseInstance = null;
+const getSupabase = () => {
+  if (!supabaseInstance) {
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
+  }
+  return supabaseInstance;
+};
 
 const formatTime = (hour, minute = 0) => `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 const parseTime = (timeStr) => {
@@ -1263,7 +1271,7 @@ export default function App() {
     console.log('Auth useEffect running...');
     let isMounted = true;
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = getSupabase().auth.onAuthStateChange(async (event, session) => {
       console.log('onAuthStateChange:', event, session?.user?.email);
       if (!isMounted) return;
       setUser(session?.user || null);
@@ -1278,7 +1286,7 @@ export default function App() {
       if (isMounted) setIsLoading(false);
     });
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    getSupabase().auth.getSession().then(async ({ data: { session } }) => {
       console.log('getSession result:', session?.user?.email);
       if (!isMounted) return;
       setUser(session?.user || null);
@@ -1299,7 +1307,7 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      await getSupabase().auth.signOut();
       setAppointments({});
       setDailyTasks({});
       setMetrics({});
@@ -1593,10 +1601,10 @@ export default function App() {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(apptChannel);
-      supabase.removeChannel(taskChannel);
-      supabase.removeChannel(metricChannel);
-      supabase.removeChannel(overviewChannel);
+      getSupabase().removeChannel(apptChannel);
+      getSupabase().removeChannel(taskChannel);
+      getSupabase().removeChannel(metricChannel);
+      getSupabase().removeChannel(overviewChannel);
     };
   }, [user]);
 
@@ -3555,7 +3563,7 @@ export default function App() {
     setDailyTasks(prev => ({ ...prev, [key]: newList }));
 
     try {
-      await supabase.from('tasks').upsert({
+      await getSupabase().from('tasks').upsert({
         user_id: user.id,
         day_key: key,
         week_key: weekKey,
@@ -3610,7 +3618,7 @@ export default function App() {
 
           setDailyTasks(prev => ({ ...prev, [key]: finalTasks }));
           
-          await supabase.from('tasks').upsert({
+          await getSupabase().from('tasks').upsert({
             user_id: user.id,
             day_key: key,
             week_key: weekKey,
@@ -3644,7 +3652,7 @@ export default function App() {
     setMetrics(prev => ({ ...prev, [key]: newMetricsObj }));
 
     try {
-      await supabase.from('metrics').upsert({
+      await getSupabase().from('metrics').upsert({
         user_id: user.id,
         day_key: key,
         week_key: weekKey,
