@@ -183,7 +183,7 @@ const Modal = ({ isOpen, onClose, title, children, showActivityReference = false
   
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
-      <div className="bg-white w-full max-h-[90vh] sm:max-w-2xl sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col ring-1 ring-black/10">
+      <div className="bg-white w-full max-h-[90vh] sm:max-w-2xl sm:rounded-2xl rounded-t-3xl shadow-sm overflow-hidden flex flex-col ring-1 ring-black/10">
         <div className="px-4 sm:px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 flex-shrink-0">
           <h3 className="text-lg sm:text-xl font-bold tracking-tight text-slate-800">{title}</h3>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-500 transition-colors active:scale-95">
@@ -463,7 +463,7 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center">
-      <div className="bg-slate-50 w-full h-[95vh] sm:h-auto sm:max-h-[90vh] sm:max-w-3xl sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col ring-1 ring-black/5">
+      <div className="bg-slate-50 w-full h-[95vh] sm:h-auto sm:max-h-[90vh] sm:max-w-3xl sm:rounded-3xl rounded-t-3xl shadow-sm overflow-hidden flex flex-col ring-1 ring-black/5">
         <div className="px-6 sm:px-8 py-6 border-b border-slate-200 flex justify-between items-center bg-white/90 backdrop-blur-md flex-shrink-0">
           <div>
             <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">Weekly Overview</h3>
@@ -648,7 +648,7 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
         <div className="p-4 sm:p-5 border-t border-slate-200 bg-white/80 backdrop-blur-md flex justify-end flex-shrink-0">
           <button 
             onClick={handleModalClose}
-            className="px-8 py-3 bg-slate-900 text-white rounded-full text-sm font-bold hover:bg-black transition-transform active:scale-95 shadow-lg"
+            className="px-8 py-3 bg-slate-900 text-white rounded-full text-sm font-bold hover:bg-black transition-transform active:scale-95"
           >
             Done
           </button>
@@ -741,7 +741,7 @@ const PendingApprovalScreen = ({ onLogout, userEmail }) => {
 const AccessDeniedScreen = ({ onLogout, userEmail, reason }) => {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl w-full max-w-md overflow-hidden text-center">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm w-full max-w-md overflow-hidden text-center">
         <div className="bg-red-500 p-8 sm:p-10">
           <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <X className="text-white" size={32} />
@@ -3921,7 +3921,7 @@ export default function App() {
   const renderDesktopGridView = () => {
     return (
       <div className="flex-1 flex flex-col p-4 pt-0">
-        <div className="bg-white rounded-b-2xl shadow-lg border border-slate-200 border-t-0 flex flex-col min-w-[900px]">
+        <div className="bg-white rounded-b-2xl shadow-sm border border-slate-200 border-t-0 flex flex-col min-w-[900px]">
           {/* Scrollable Content */}
           <div className="flex-1 overflow-auto">
           {/* TOP PRIORITIES Section */}
@@ -4268,7 +4268,7 @@ export default function App() {
           )}
           <button
             onClick={handleSaveAppointment}
-            className="flex items-center gap-2 px-6 py-2.5 bg-blue-500 text-white rounded-full text-sm font-bold hover:bg-blue-600 shadow-md hover:shadow-lg transition-all active:scale-95"
+            className="flex items-center gap-2 px-6 py-2.5 bg-blue-500 text-white rounded-full text-sm font-bold hover:bg-blue-600 shadow-md transition-all active:scale-95"
           >
             <Save size={16} />
             {editId ? "Update" : "Save"}
