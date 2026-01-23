@@ -148,13 +148,13 @@ const CATEGORIES = {
 };
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const HOURS = Array.from({ length: 15 }, (_, i) => i + 7);
+const HOURS = Array.from({ length: 16 }, (_, i) => i + 7);
 
-// Generate 30-minute time slots from 7:00 to 21:30
+// Generate 30-minute time slots from 7:00 to 22:00
 const TIME_SLOTS = [];
-for (let h = 7; h <= 21; h++) {
+for (let h = 7; h <= 22; h++) {
   TIME_SLOTS.push({ hour: h, minute: 0, label: `${h}:00` });
-  if (h < 21) {
+  if (h < 22) {
     TIME_SLOTS.push({ hour: h, minute: 30, label: `${h}:30` });
   }
 }
@@ -183,7 +183,7 @@ const isOldKeyFormat = (slotKey, hour) => {
   // If the last part equals the hour value and hour is >= 7 (valid hour range)
   // and the slot index would be different, it's old format
   const expectedSlotIndex = (hour - 7) * 2;
-  return lastPart === hour && lastPart !== expectedSlotIndex && hour >= 7 && hour <= 21;
+  return lastPart === hour && lastPart !== expectedSlotIndex && hour >= 7 && hour <= 22;
 };
 
 const Modal = ({ isOpen, onClose, title, children, showActivityReference = false, onSelectActivity, selectedCategory }) => {
