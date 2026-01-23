@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, X, ChevronLeft, ChevronRight, Save, Trash2, Sparkles, Loader2, LogOut, User, Download, Calendar, Shield, Users, Check, Ban, Clock, Search, RefreshCw } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
 // Singleton pattern to prevent multiple Supabase instances
+// Environment variables are read lazily to avoid initialization issues
 let supabaseInstance = null;
 const getSupabase = () => {
   if (!supabaseInstance) {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
   }
   return supabaseInstance;
