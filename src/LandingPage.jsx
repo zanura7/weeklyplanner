@@ -42,7 +42,6 @@ const LandingPage = () => {
           <nav className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm text-slate-600 hover:text-blue-600 transition-colors">Features</a>
             <a href="#benefits" className="text-sm text-slate-600 hover:text-blue-600 transition-colors">Benefits</a>
-            <a href="#pricing" className="text-sm text-slate-600 hover:text-blue-600 transition-colors">Pricing</a>
           </nav>
           
           <Link 
@@ -66,12 +65,12 @@ const LandingPage = () => {
           </div>
           
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-6 text-slate-800">
-            <span className="italic">Your Week, Planned.</span><br />
-            <span className="italic">Your Goals, Achieved.</span>
+            <span className="italic">Dominate Your Week.</span><br />
+            <span className="italic">Smash Your Goals.</span>
           </h1>
           
           <p className="text-lg text-slate-600 max-w-2xl mx-auto mb-10">
-            SpeedPlan combines AI coaching, smart tracking, and seamless sync to help sales professionals and team leaders conquer their week with confidence.
+            Stop guessing and start closing. SpeedPlan fuses 24/7 AI coaching with smart tracking to help sales pros and team leaders conquer every week with total confidence.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
@@ -170,9 +169,9 @@ const LandingPage = () => {
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-5">
                 <Sparkles className="text-blue-600" size={24} />
               </div>
-              <h3 className="text-lg font-bold mb-3 text-slate-800">AI Coach Assist</h3>
+              <h3 className="text-lg font-bold mb-3 text-slate-800">Your Personal AI Mentor</h3>
               <p className="text-slate-600 text-sm leading-relaxed">
-                SpeedPlan combines that AI coach with planners, and key report data.
+                Don't just plan—strategize. Our built-in AI Coach analyzes your key data to give you actionable advice that drives real results.
               </p>
             </div>
             
@@ -181,9 +180,9 @@ const LandingPage = () => {
               <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center mb-5">
                 <Tag className="text-cyan-600" size={24} />
               </div>
-              <h3 className="text-lg font-bold mb-3 text-slate-800">Smart Tags</h3>
+              <h3 className="text-lg font-bold mb-3 text-slate-800">Smart Tags: Intelligence at a Glance</h3>
               <p className="text-slate-600 text-sm leading-relaxed">
-                SpeedPlan combines smart tags, trends, data, categories a metric page.
+                Turn chaos into clarity. Use Smart Tags to instantly categorize tasks, spot performance trends, and visualize your metrics in seconds.
               </p>
             </div>
             
@@ -192,9 +191,9 @@ const LandingPage = () => {
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-5">
                 <FileText className="text-purple-600" size={24} />
               </div>
-              <h3 className="text-lg font-bold mb-3 text-slate-800">Export Report</h3>
+              <h3 className="text-lg font-bold mb-3 text-slate-800">Reports: Insights Ready to Share</h3>
               <p className="text-slate-600 text-sm leading-relaxed">
-                Export report for detailed analysis, share not information in report area.
+                Skip the manual work. Generate powerful, detailed analysis reports with a single click—perfect for team updates or deep-dive reviews.
               </p>
             </div>
             
@@ -203,9 +202,9 @@ const LandingPage = () => {
               <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center mb-5">
                 <RefreshCw className="text-emerald-600" size={24} />
               </div>
-              <h3 className="text-lg font-bold mb-3 text-slate-800">Fluid Sync Everywhere.</h3>
+              <h3 className="text-lg font-bold mb-3 text-slate-800">Sync at the Speed of Sales</h3>
               <p className="text-slate-600 text-sm leading-relaxed">
-                Report fluid sync, everywhere, subscribe sync your devices need to to simple forms.
+                Experience fluid, real-time synchronization across every device. No friction, no delays, just your data ready whenever and wherever you are.
               </p>
             </div>
           </div>
@@ -228,8 +227,9 @@ const LandingPage = () => {
                 <TrendingUp className="text-blue-600" size={28} />
               </div>
               <h3 className="text-xl font-bold mb-3 text-slate-800">For Sales Professionals</h3>
+              <h4 className="text-lg font-semibold mb-3 text-blue-600">Crush your quotas with clarity.</h4>
               <p className="text-slate-600 leading-relaxed">
-                For Sales professionals to maximize performance, clarity for team and having shareages, compatibility and professional share areas.
+                Maximize your daily performance with crystal-clear goal tracking. Streamline your workflow and share resources instantly to close deals faster.
               </p>
             </div>
             
@@ -239,8 +239,9 @@ const LandingPage = () => {
                 <Users className="text-purple-600" size={28} />
               </div>
               <h3 className="text-xl font-bold mb-3 text-slate-800">For Group Leaders</h3>
+              <h4 className="text-lg font-semibold mb-3 text-purple-600">Turn data into direction.</h4>
               <p className="text-slate-600 leading-relaxed">
-                For Group Leaders to searchbar and group scenarios to help supervision about the better Leaders to the sales care executors.
+                Lead with confidence using advanced scenario planning and intuitive search tools. Effortless supervision that empowers your team, rather than micromanaging them.
               </p>
             </div>
           </div>
