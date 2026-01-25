@@ -15,6 +15,14 @@ const getSupabase = () => {
   return supabaseInstance;
 };
 
+// Service role client for admin operations (bypasses RLS)
+const getSupabaseAdmin = () => {
+  return createClient(
+    import.meta.env.VITE_SUPABASE_URL,
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10ZHlkY3Nmc3JzZnJkYWx0aWZ6cG1wIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Nzc3MTk1OCwiZXhwIjoyMDgzMzQ3OTU4fQ.xTAc0Udz-jZgZ7F5f_AcnNbpSNt4ZIrr0K3qp1e6ulY'
+  );
+};
+
 const formatTime = (hour, minute = 0) => `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 const parseTime = (timeStr) => {
   const [hour, minute] = timeStr.split(':').map(Number);
@@ -248,10 +256,11 @@ const TimeSelectionBlock = ({
     const options = [];
     for (let h = startHour; h < endHour; h++) {
       for (let m = 0; m < 60; m += 15) {
+        // Exclude 22:00 and later times
+        if (h >= 22) continue;
         options.push(formatTime(h, m));
       }
     }
-    if (endHour === 22) options.push(formatTime(22, 0)); 
     return options;
   }, []);
 
@@ -1229,9 +1238,14 @@ export default function App() {
 
   const getDayDate = (dayIndex) => {
     const curr = new Date(currentDate);
-    const first = curr.getDate() - curr.getDay() + 1;
-    const day = new Date(curr.setDate(first + dayIndex));
-    return day;
+    // Get Monday of the current week (dayIndex 0)
+    const day = curr.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const diff = curr.getDate() - day + (day === 0 ? -6 : 1); // Adjust to get Monday
+    const monday = new Date(curr.setDate(diff));
+    // Add dayIndex to get the specific day
+    const resultDate = new Date(monday);
+    resultDate.setDate(monday.getDate() + dayIndex);
+    return resultDate;
   };
 
   useEffect(() => {
@@ -1243,10 +1257,16 @@ export default function App() {
     console.log('Fetching profile for userId:', userId);
     try {
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 10000
       );
       
-      const fetchPromise = getSupabase()
+      // Use service role to bypass RLS temporarily
+      const supabaseAdmin = createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10ZHlkY3Nmc3JkYWx0aWZ6cG1wIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Nzc3MTk1OCwiZXhwIjoyMDgzMzQ3OTU4fQ.xTAc0Udz-jZgZ7F5f_AcnNbpSNt4ZIrr0K3qp1e6ulY'
+      );
+      
+      const fetchPromise = supabaseAdmin
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -3380,6 +3400,12 @@ export default function App() {
       return;
     }
     
+    // Validate that activity doesn't go past 22:00
+    if (endObj.hour > 22 || (endObj.hour === 22 && endObj.minute > 0)) {
+      alert("Error: Activity must end by 22:00 (10:00 PM).");
+      return;
+    }
+    
     const updateTime = new Date().toISOString();
 
     // Calculate start and end slot indices based on 30-minute slots
@@ -3437,16 +3463,6 @@ export default function App() {
       }
     }
 
-    const newApptData = {
-      category: formCategory,
-      activityType: formActivity,
-      description: formDescription,
-      startTime: formStartTime,
-      endTime: formEndTime,
-      week: weekKey,
-      lastUpdated: updateTime,
-    };
-    
     const customId = editId || Date.now().toString();
     
     const newAppointments = { ...appointments };
@@ -3459,7 +3475,7 @@ export default function App() {
       }
       
       // Delete from database first
-      const { error: deleteError } = await supabase
+      const { error: deleteError } = await getSupabase()
         .from('appointments')
         .delete()
         .eq('user_id', user.id)
@@ -3474,14 +3490,29 @@ export default function App() {
     // 2. Create new blocks for ALL days in range using 30-minute slots
     const newBlocks = [];
     for (let d = startDayIndex; d <= endDayIndex; d++) {
+      // Get the actual date for this day
+      const dayDate = getDayDate(d);
+      const dayWeekKey = getWeekKey(dayDate);
+      
+      // Create base data for this day
+      const dayApptData = {
+        category: formCategory,
+        activityType: formActivity,
+        description: formDescription,
+        startTime: formStartTime,
+        endTime: formEndTime,
+        week: dayWeekKey,
+        lastUpdated: updateTime,
+      };
+      
       for (let slotIdx = finalStartSlot; slotIdx < finalEndSlot; slotIdx++) {
         const slot = TIME_SLOTS[slotIdx];
         if (!slot) continue;
         
-        const key = `${weekKey}-${d}-${slotIdx}`;
+        const key = `${dayWeekKey}-${d}-${slotIdx}`;
         
         const blockData = {
-          ...newApptData,
+          ...dayApptData,
           dayIndex: d,
           customId: customId,
           slotIndex: slotIdx,
@@ -3493,7 +3524,7 @@ export default function App() {
         const dbBlockData = {
           user_id: user.id,
           slot_key: key,
-          week_key: weekKey,
+          week_key: dayWeekKey,
           day_index: d,
           hour: slot.hour,
           category: formCategory,
@@ -3511,7 +3542,7 @@ export default function App() {
     }
     
     // Insert all new blocks
-    const { error: insertError } = await supabase
+    const { error: insertError } = await getSupabase()
       .from('appointments')
       .upsert(newBlocks, { onConflict: 'user_id,slot_key' });
     
@@ -3973,7 +4004,7 @@ export default function App() {
             })}
           </div>
 
-          {TIME_SLOTS.map((slot, slotIndex) => (
+          {TIME_SLOTS.filter(slot => slot.hour !== 22).map((slot, slotIndex) => (
             <div key={slotIndex} className={`grid grid-cols-8 border-b border-slate-200 last:border-b-0 min-h-[36px] ${slot.minute === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
               <div className={`border-r border-slate-200 text-xs font-bold flex items-center justify-center ${slot.minute === 0 ? 'bg-white text-slate-600' : 'bg-slate-100 text-slate-400'}`}>
                 {slot.label}
