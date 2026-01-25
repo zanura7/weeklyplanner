@@ -1,0 +1,30 @@
+To add a Settings button to the App header, follow these steps:
+
+1. Open src/App.jsx in your editor
+
+2. Find this line in the imports (around line 3):
+   import { Plus, X, ChevronLeft, ChevronRight, Save, Trash2, Sparkles, Loader2, LogOut, User, Download, Calendar, Shield, Users, Check, Ban, Clock, Search, RefreshCw } from 'lucide-react';
+
+   Add "Settings" to the import:
+   import { Plus, X, ChevronLeft, ChevronRight, Save, Trash2, Sparkles, Loader2, LogOut, User, Download, Calendar, Shield, Users, Check, Ban, Clock, Search, RefreshCw, Settings } from 'lucide-react';
+
+3. Find the state declarations (around line 63):
+   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
+
+   Add after it:
+   const [showSettings, setShowSettings] = useState(false);
+
+4. Find the header buttons section (search for "Admin" button, around line 4223).
+   After the Admin button section, add this button:
+
+   <button 
+     onClick={() => window.location.href = '/settings'}
+     className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-slate-700 text-white rounded-full hover:bg-slate-800 transition-all text-sm font-bold shadow-md active:scale-95"
+   >
+     <Settings size={16} strokeWidth={2.5} />
+     <span className="hidden sm:inline">Settings</span>
+   </button>
+
+5. Save the file.
+
+The Settings button will appear between the Admin button and Weekly Overview button.

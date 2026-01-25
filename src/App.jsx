@@ -676,10 +676,14 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
 };
 
 const MobileDaySelector = ({ mobileDay, setMobileDay, getDayDate }) => {
+  const today = new Date();
+  const todayDayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1;
+  
   return (
     <div className="flex overflow-x-auto gap-2 p-3 bg-white border-b border-slate-200 scrollbar-hide">
       {DAYS.map((day, idx) => {
         const isActive = idx === mobileDay;
+        const isToday = idx === todayDayIndex;
         const dayDate = getDayDate(idx);
         return (
           <button
@@ -688,7 +692,9 @@ const MobileDaySelector = ({ mobileDay, setMobileDay, getDayDate }) => {
             className={`flex-shrink-0 px-4 py-2 rounded-xl text-center transition-all ${
               isActive 
                 ? 'bg-blue-500 text-white shadow-md' 
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                : isToday
+                  ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
             <div className="text-xs font-bold">{day}</div>
