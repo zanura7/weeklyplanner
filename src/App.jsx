@@ -4010,19 +4010,21 @@ export default function App() {
             })}
           </div>
 
-          {TIME_SLOTS.filter(slot => slot.hour !== 22).map((slot, slotIndex) => (
-            <div key={slotIndex} className={`grid grid-cols-8 border-b border-slate-200 last:border-b-0 min-h-[36px] ${slot.minute === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
+          {TIME_SLOTS.filter(slot => slot.hour !== 22).map((slot) => {
+            const originalSlotIndex = TIME_SLOTS.findIndex(s => s.hour === slot.hour && s.minute === slot.minute);
+            return (
+            <div key={originalSlotIndex} className={`grid grid-cols-8 border-b border-slate-200 last:border-b-0 min-h-[36px] ${slot.minute === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
               <div className={`border-r border-slate-200 text-xs font-bold flex items-center justify-center ${slot.minute === 0 ? 'bg-white text-slate-600' : 'bg-slate-100 text-slate-400'}`}>
                 {slot.label}
               </div>
               {DAYS.map((_, dayIdx) => {
-                const { isSet, data: appt, categoryData, isFirstBlock } = getApptData(dayIdx, slotIndex);
+                const { isSet, data: appt, categoryData, isFirstBlock } = getApptData(dayIdx, originalSlotIndex);
                 const isToday = isTodayInCurrentWeek && dayIdx === todayDayIndex;
-                
+
                 return (
-                  <div 
+                  <div
                     key={dayIdx}
-                    onClick={() => handleEditActivityClick(dayIdx, slotIndex)}
+                    onClick={() => handleEditActivityClick(dayIdx, originalSlotIndex)}
                     className={`border-r border-slate-200 last:border-r-0 cursor-pointer transition-colors group ${
                       isSet ? categoryData?.color : isToday ? 'bg-blue-100/80 hover:bg-blue-200' : slot.minute === 0 ? 'hover:bg-slate-100' : 'hover:bg-slate-50'
                     }`}
@@ -4052,7 +4054,8 @@ export default function App() {
                 );
               })}
             </div>
-          ))}
+            );
+          })}
 
           {/* METRICS Section - At Bottom after Time Grid */}
           <div className="grid grid-cols-8 border-t-2 border-slate-300 bg-slate-50">
