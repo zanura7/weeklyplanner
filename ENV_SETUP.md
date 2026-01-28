@@ -15,6 +15,12 @@ The `.env` file is gitignored and contains your local development credentials:
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
+# Supabase Service Role Key (for admin dashboard operations)
+# Get from: Supabase Dashboard → Settings → API → service_role (secret)
+# IMPORTANT: Only set this in Vercel/Netlify environment variables
+# NEVER commit actual service role key to repository
+VITE_SUPABASE_SERVICE_ROLE_KEY=
+
 # OpenRouter API Key (for AI coaching features)
 # Get your API key from: https://openrouter.ai/keys
 # IMPORTANT: Set this in Vercel environment variables for production
@@ -30,6 +36,7 @@ VITE_OPENROUTER_API_KEY=
 4. Copy:
    - Project URL → `VITE_SUPABASE_URL`
    - anon/public key → `VITE_SUPABASE_ANON_KEY`
+   - **service_role key** → `VITE_SUPABASE_SERVICE_ROLE_KEY` (for admin dashboard)
 
 #### OpenRouter (AI Features)
 1. Go to [OpenRouter API Keys](https://openrouter.ai/keys)
@@ -50,6 +57,7 @@ VITE_OPENROUTER_API_KEY=
 |------|-------|-------------|
 | `VITE_SUPABASE_URL` | Your Supabase project URL | Production, Preview |
 | `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key | Production, Preview |
+| `VITE_SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key (secret) | Production, Preview |
 | `VITE_OPENROUTER_API_KEY` | Your OpenRouter API key | Production, Preview |
 
 5. Click **Save**
@@ -81,6 +89,7 @@ vercel env pull .env.local
 |------|-------|
 | `VITE_SUPABASE_URL` | Your Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key |
+| `VITE_SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key (secret) |
 | `VITE_OPENROUTER_API_KEY` | Your OpenRouter API key |
 
 5. Click **Save**

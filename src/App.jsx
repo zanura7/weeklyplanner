@@ -16,10 +16,17 @@ const getSupabase = () => {
 };
 
 // Service role client for admin operations (bypasses RLS)
+// SECURITY: Uses environment variable instead of hardcoded key
 const getSupabaseAdmin = () => {
+  const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    console.warn('Service role key not configured. Admin operations may not work correctly.');
+    // Fallback to regular client if service role key is not available
+    return getSupabase();
+  }
   return createClient(
     import.meta.env.VITE_SUPABASE_URL,
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10ZHlkY3Nmc3JzZnJkYWx0aWZ6cG1wIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Nzc3MTk1OCwiZXhwIjoyMDgzMzQ3OTU4fQ.xTAc0Udz-jZgZ7F5f_AcnNbpSNt4ZIrr0K3qp1e6ulY'
+    serviceRoleKey
   );
 };
 
@@ -798,6 +805,15 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [updating, setUpdating] = useState(null);
+  const [notification, setNotification] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  // Show notification helper
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -824,11 +840,13 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
       .from('profiles')
       .update({ status: newStatus, updated_at: new Date().toISOString() })
       .eq('id', userId);
-    
+
     if (error) {
       console.error('Error updating status:', error);
+      showNotification(`Failed to update status: ${error.message}`, 'error');
     } else {
-      setUsers(users.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+      await fetchUsers(); // Refresh to get latest data from server
+      showNotification(`Status updated to "${newStatus}" successfully`, 'success');
     }
     setUpdating(null);
   };
@@ -839,26 +857,51 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
       .from('profiles')
       .update({ role: newRole, updated_at: new Date().toISOString() })
       .eq('id', userId);
-    
+
     if (error) {
       console.error('Error updating role:', error);
+      showNotification(`Failed to update role: ${error.message}`, 'error');
     } else {
-      setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      await fetchUsers(); // Refresh to get latest data from server
+      showNotification(`Role updated to "${newRole}" successfully`, 'success');
     }
     setUpdating(null);
   };
 
   const handleUpdateExpiry = async (userId, expiryDate) => {
+    // Validate date if provided
+    if (expiryDate) {
+      const selectedDate = new Date(expiryDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (isNaN(selectedDate.getTime())) {
+        showNotification('Invalid date format', 'error');
+        return;
+      }
+
+      // Optionally: Ensure expiry date is in the future
+      // Uncomment if you want to enforce this rule
+      /*
+      if (selectedDate < today) {
+        showNotification('Expiry date must be in the future', 'error');
+        return;
+      }
+      */
+    }
+
     setUpdating(userId);
     const { error } = await getSupabase()
       .from('profiles')
       .update({ expiry_date: expiryDate || null, updated_at: new Date().toISOString() })
       .eq('id', userId);
-    
+
     if (error) {
       console.error('Error updating expiry:', error);
+      showNotification(`Failed to update expiry date: ${error.message}`, 'error');
     } else {
-      setUsers(users.map(u => u.id === userId ? { ...u, expiry_date: expiryDate } : u));
+      await fetchUsers(); // Refresh to get latest data from server
+      showNotification('Expiry date updated successfully', 'success');
     }
     setUpdating(null);
   };
@@ -867,67 +910,86 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
     if (!window.confirm(`Are you sure you want to delete user "${userEmail}"? This will delete ALL user data including appointments, tasks, metrics, and weekly overviews. This action cannot be undone.`)) {
       return;
     }
-    
+
     setUpdating(userId);
-    
+
     try {
       // Delete user's appointments
       await getSupabase()
         .from('appointments')
         .delete()
         .eq('user_id', userId);
-      
+
       // Delete user's tasks
       await getSupabase()
         .from('tasks')
         .delete()
         .eq('user_id', userId);
-      
+
       // Delete user's metrics
       await getSupabase()
         .from('metrics')
         .delete()
         .eq('user_id', userId);
-      
+
       // Delete user's weekly overviews
       await getSupabase()
         .from('weekly_overviews')
         .delete()
         .eq('user_id', userId);
-      
+
       // Finally delete user profile
       const { error: profileError } = await getSupabase()
         .from('profiles')
         .delete()
         .eq('id', userId);
-      
+
       if (profileError) {
         console.error('Error deleting user profile:', profileError);
-        alert('Failed to delete user profile. Please try again.');
+        showNotification('Failed to delete user profile. Please try again.', 'error');
         setUpdating(null);
         return;
       }
-      
-      // Remove user from local state
-      setUsers(users.filter(u => u.id !== userId));
+
+      await fetchUsers(); // Refresh to get latest data from server
+      showNotification(`User "${userEmail}" deleted successfully`, 'success');
     } catch (error) {
       console.error('Error deleting user data:', error);
-      alert('Failed to delete user data. Please try again.');
+      showNotification('Failed to delete user data. Please try again.', 'error');
     }
-    
+
     setUpdating(null);
   };
 
+  // Pagination and filtering logic
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
+    const matchesSearch =
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.mobile?.includes(searchTerm);
-    
+
     const matchesFilter = filterStatus === 'all' || user.status === filterStatus;
-    
+
     return matchesSearch && matchesFilter;
   });
+
+  // Get paginated users
+  const indexOfLastUser = currentPage * itemsPerPage;
+  const indexOfFirstUser = indexOfLastUser - itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  // Handle filter change - clear search and reset to page 1
+  const handleFilterChange = (newStatus) => {
+    setFilterStatus(newStatus);
+    setSearchTerm(''); // Clear search when changing filters
+    setCurrentPage(1); // Reset to first page
+  };
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
 
   const statusCounts = {
     all: users.length,
@@ -973,6 +1035,21 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        {/* Notification Toast */}
+        {notification && (
+          <div className={`mb-4 px-4 py-3 rounded-lg flex items-center justify-between ${
+            notification.type === 'success' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'
+          }`}>
+            <span className="text-sm font-medium">{notification.message}</span>
+            <button
+              onClick={() => setNotification(null)}
+              className="p-1 hover:bg-white/50 rounded"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-xl p-4 border border-slate-200">
@@ -1038,7 +1115,7 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
               {['all', 'pending', 'approved', 'denied'].map(status => (
                 <button
                   key={status}
-                  onClick={() => setFilterStatus(status)}
+                  onClick={() => handleFilterChange(status)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     filterStatus === status
                       ? 'bg-blue-500 text-white'
@@ -1084,7 +1161,7 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredUsers.map(user => (
+                  {paginatedUsers.map(user => (
                     <tr key={user.id} className={`hover:bg-slate-50 ${updating === user.id ? 'opacity-50' : ''}`}>
                       <td className="px-4 py-3">
                         <div>
@@ -1168,6 +1245,44 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {filteredUsers.length > itemsPerPage && (
+            <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-t border-slate-200">
+              <div className="text-sm text-slate-600">
+                Showing {indexOfFirstUser + 1} to {Math.min(indexOfLastUser, filteredUsers.length)} of {filteredUsers.length} users
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                      currentPage === page
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -1267,11 +1382,8 @@ export default function App() {
       );
       
       // Use service role to bypass RLS temporarily
-      const supabaseAdmin = createClient(
-        import.meta.env.VITE_SUPABASE_URL,
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10ZHlkY3Nmc3JkYWx0aWZ6cG1wIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2Nzc3MTk1OCwiZXhwIjoyMDgzMzQ3OTU4fQ.xTAc0Udz-jZgZ7F5f_AcnNbpSNt4ZIrr0K3qp1e6ulY'
-      );
-      
+      const supabaseAdmin = getSupabaseAdmin();
+
       const fetchPromise = supabaseAdmin
         .from('profiles')
         .select('*')
