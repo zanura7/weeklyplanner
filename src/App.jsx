@@ -15,20 +15,14 @@ const getSupabase = () => {
   return supabaseInstance;
 };
 
-// Service role client for admin operations (bypasses RLS)
-// SECURITY: Uses environment variable instead of hardcoded key
-const getSupabaseAdmin = () => {
-  const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceRoleKey) {
-    console.warn('Service role key not configured. Admin operations may not work correctly.');
-    // Fallback to regular client if service role key is not available
-    return getSupabase();
-  }
-  return createClient(
-    import.meta.env.VITE_SUPABASE_URL,
-    serviceRoleKey
-  );
-};
+// SECURITY CRITICAL: Service role keys should NEVER be used in frontend code
+// All admin operations should use Supabase Edge Functions or server-side APIs
+// This prevents exposure of privileged credentials in client-side JavaScript
+//
+// For admin operations, use Supabase RPC functions with SECURITY DEFINER
+// Example: supabase.rpc('admin_update_user_status', { user_id, new_status })
+//
+// See: https://supabase.com/docs/guides/database/server-client-helpers#security-definer-functions
 
 const formatTime = (hour, minute = 0) => `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 const parseTime = (timeStr) => {
@@ -799,7 +793,7 @@ const AccessDeniedScreen = ({ onLogout, userEmail, reason }) => {
   );
 };
 
-const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
+const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner, userProfile }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -808,6 +802,46 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
   const [notification, setNotification] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [isAdminVerified, setIsAdminVerified] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(true);
+
+  // SECURITY: Verify admin role before loading any data
+  useEffect(() => {
+    const verifyAdminAccess = async () => {
+      if (!currentUser) {
+        setIsVerifying(false);
+        onLogout();
+        return;
+      }
+
+      // Check if user has admin role from userProfile
+      if (userProfile?.role !== 'admin') {
+        console.warn('Unauthorized access attempt to AdminDashboard by non-admin user');
+        setIsVerifying(false);
+        onBackToPlanner();
+        return;
+      }
+
+      // Double-check with server to prevent client-side manipulation
+      const { data, error } = await getSupabase()
+        .from('profiles')
+        .select('role')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (error || data?.role !== 'admin') {
+        console.error('Admin verification failed:', error);
+        setIsVerifying(false);
+        onBackToPlanner();
+        return;
+      }
+
+      setIsAdminVerified(true);
+      setIsVerifying(false);
+    };
+
+    verifyAdminAccess();
+  }, [currentUser, userProfile]);
 
   // Show notification helper
   const showNotification = (message, type = 'success') => {
@@ -816,12 +850,18 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
   };
 
   const fetchUsers = async () => {
+    // SECURITY: Only fetch users if admin is verified
+    if (!isAdminVerified) {
+      console.warn('Attempted to fetch users without admin verification');
+      return;
+    }
+
     setLoading(true);
     const { data, error } = await getSupabase()
       .from('profiles')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) {
       console.error('Error fetching users:', error);
     } else {
@@ -831,8 +871,27 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (isAdminVerified) {
+      fetchUsers();
+    }
+  }, [isAdminVerified]);
+
+  // Show loading during verification
+  if (isVerifying) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin mx-auto mb-4 text-indigo-500" size={40} />
+          <p className="text-slate-600">Verifying admin access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not verified
+  if (!isAdminVerified) {
+    return null;
+  }
 
   const handleUpdateStatus = async (userId, newStatus) => {
     setUpdating(userId);
@@ -961,12 +1020,23 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner }) => {
     setUpdating(null);
   };
 
+  // SECURITY: Sanitize search input to prevent ReDoS (Regular Expression Denial of Service)
+  const sanitizeSearchTerm = (term) => {
+    if (!term) return '';
+    // Remove special regex characters that could cause ReDoS
+    return term
+      .replace(/[.*+?^${}()|[\]\\]/g, '') // Remove regex special chars
+      .slice(0, 100); // Limit length to prevent DoS
+  };
+
+  const safeSearchTerm = sanitizeSearchTerm(searchTerm);
+
   // Pagination and filtering logic
   const filteredUsers = users.filter(user => {
     const matchesSearch =
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.mobile?.includes(searchTerm);
+      user.email?.toLowerCase().includes(safeSearchTerm.toLowerCase()) ||
+      user.username?.toLowerCase().includes(safeSearchTerm.toLowerCase()) ||
+      user.mobile?.includes(safeSearchTerm);
 
     const matchesFilter = filterStatus === 'all' || user.status === filterStatus;
 
@@ -1377,23 +1447,21 @@ export default function App() {
   const fetchUserProfile = async (userId) => {
     console.log('Fetching profile for userId:', userId);
     try {
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
       );
-      
-      // Use service role to bypass RLS temporarily
-      const supabaseAdmin = getSupabaseAdmin();
 
-      const fetchPromise = supabaseAdmin
+      // Use regular client with RLS - user can only access their own profile
+      const fetchPromise = getSupabase()
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
-      
+
       const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
-      
+
       console.log('Profile fetch result:', { data, error });
-      
+
       if (error) {
         console.log('Profile not found or error:', error.message);
         return null;
@@ -3919,10 +3987,11 @@ export default function App() {
   // Show Admin Dashboard for admin users
   if (userProfile?.role === 'admin' && showAdminDashboard) {
     return (
-      <AdminDashboard 
-        currentUser={user} 
-        onLogout={handleLogout} 
-        onBackToPlanner={() => setShowAdminDashboard(false)} 
+      <AdminDashboard
+        currentUser={user}
+        userProfile={userProfile}
+        onLogout={handleLogout}
+        onBackToPlanner={() => setShowAdminDashboard(false)}
       />
     );
   }
