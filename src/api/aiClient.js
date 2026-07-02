@@ -1,5 +1,5 @@
 /**
- * AI Client with Timeout, Retry, and Error Handling
+ * 9router AI Client with Timeout, Retry, and Error Handling
  * Handles all AI API calls with robust error recovery
  */
 
@@ -7,6 +7,8 @@
 const AI_REQUEST_TIMEOUT = 30000; // 30 seconds
 const AI_MAX_RETRIES = 2;
 const AI_RETRY_DELAY = 1000; // 1 second
+const AI_BASE_URL = (import.meta.env.VITE_9ROUTER_BASE_URL || "https://9.viber.id/v1").replace(/\/+$/, "");
+const AI_MODEL = import.meta.env.VITE_9ROUTER_MODEL || "weekly";
 
 /**
  * Create a timeout promise
@@ -35,7 +37,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
  * @param {Object} options - Additional options
  * @returns {Promise<string|null>}
  */
-export const generateOpenRouterResponse = async (
+export const generate9RouterResponse = async (
   prompt,
   systemInstruction = "",
   options = {}
@@ -44,13 +46,13 @@ export const generateOpenRouterResponse = async (
     timeout = AI_REQUEST_TIMEOUT,
     maxRetries = AI_MAX_RETRIES,
     retryDelay = AI_RETRY_DELAY,
-    model = "deepseek/deepseek-chat-v3-0324"
+    model = AI_MODEL
   } = options;
 
-  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+  const apiKey = import.meta.env.VITE_9ROUTER_API_KEY;
   
   if (!apiKey) {
-    console.warn("OpenRouter API key not configured");
+    console.warn("9router API key not configured");
     return null;
   }
   
@@ -68,7 +70,7 @@ export const generateOpenRouterResponse = async (
       console.log(`AI Request attempt ${attempt + 1}/${maxRetries + 1}`);
 
       // Create request with timeout
-      const requestPromise = fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const requestPromise = fetch(`${AI_BASE_URL}/chat/completions`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -94,7 +96,7 @@ export const generateOpenRouterResponse = async (
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const error = new Error(
-          `OpenRouter API Error: ${response.status} ${response.statusText} - ${
+          `9router API Error: ${response.status} ${response.statusText} - ${
             errorData.error?.message || errorData.message || 'Unknown error'
           }`
         );
@@ -107,7 +109,7 @@ export const generateOpenRouterResponse = async (
       
       // Validate response structure
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        throw new Error('Invalid response structure from OpenRouter API');
+        throw new Error('Invalid response structure from 9router API');
       }
 
       const result = data.choices[0].message.content;
@@ -148,9 +150,9 @@ export const generateOpenRouterResponse = async (
 };
 
 /**
- * Legacy alias for backward compatibility
+ * Alias for app AI calls
  */
-export const generateGeminiResponse = generateOpenRouterResponse;
+export const generateAIResponse = generate9RouterResponse;
 
 /**
  * Batch AI requests for multiple prompts
@@ -161,7 +163,7 @@ export const generateGeminiResponse = generateOpenRouterResponse;
 export const batchGenerateAIResponses = async (requests, options = {}) => {
   const results = await Promise.all(
     requests.map(req => 
-      generateOpenRouterResponse(req.prompt, req.systemInstruction, options)
+      generate9RouterResponse(req.prompt, req.systemInstruction, options)
     )
   );
   return results;
@@ -179,13 +181,13 @@ export const generateStreamingResponse = async (
   onChunk,
   onComplete
 ) => {
-  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+  const apiKey = import.meta.env.VITE_9ROUTER_API_KEY;
   if (!apiKey) {
-    throw new Error('OpenRouter API key not configured');
+    throw new Error('9router API key not configured');
   }
 
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch(`${AI_BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -194,7 +196,7 @@ export const generateStreamingResponse = async (
         'X-Title': 'Speed Planner'
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-chat-v3-0324",
+        model: AI_MODEL,
         messages: [{ role: "user", content: prompt }],
         stream: true
       })
@@ -245,14 +247,14 @@ export const generateStreamingResponse = async (
  * @returns {Promise<boolean>}
  */
 export const checkAIServiceHealth = async () => {
-  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+  const apiKey = import.meta.env.VITE_9ROUTER_API_KEY;
   if (!apiKey) {
     return false;
   }
 
   try {
     const response = await Promise.race([
-      fetch("https://openrouter.ai/api/v1/models", {
+      fetch(`${AI_BASE_URL}/models`, {
         headers: { 
           'Authorization': `Bearer ${apiKey}`
         }

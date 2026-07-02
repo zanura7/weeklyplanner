@@ -44,7 +44,7 @@ const AI_MODEL = import.meta.env.VITE_9ROUTER_MODEL || "weekly";
 // Streams a chat completion from the 9router (OpenAI-compatible) endpoint.
 // onToken(partialText) is called on every chunk so the UI can render live;
 // the full text is returned when the stream completes (null on failure).
-const generateOpenRouterResponse = async (prompt, systemInstruction = "", onToken = null) => {
+const generate9RouterResponse = async (prompt, systemInstruction = "", onToken = null) => {
   const apiKey = import.meta.env.VITE_9ROUTER_API_KEY;
   if (!apiKey) {
     console.warn("9router API key not configured");
@@ -116,8 +116,7 @@ const generateOpenRouterResponse = async (prompt, systemInstruction = "", onToke
   }
 };
 
-// Alias for backward compatibility
-const generateGeminiResponse = generateOpenRouterResponse;
+const generateAIResponse = generate9RouterResponse;
 
 const CATEGORIES = {
   INCOME: {
@@ -490,7 +489,7 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
       [3. Three actionable pieces of advice for next week, formatted as a numbered list (1., 2., 3.).]
     `;
 
-    const result = await generateGeminiResponse(prompt, "", (partial) => setAiText(partial));
+    const result = await generateAIResponse(prompt, "", (partial) => setAiText(partial));
 
     if (result) {
       setAiText(result);
@@ -3873,7 +3872,7 @@ export default function App() {
       Do not include markdown formatting or explanation.
     `;
 
-    const responseText = await generateGeminiResponse(prompt);
+    const responseText = await generateAIResponse(prompt);
     
     if (responseText) {
       try {
