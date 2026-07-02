@@ -38,19 +38,13 @@ const HEADER_IMAGES = [
   "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&q=80&w=2000"
 ];
 
-const AI_BASE_URL = (import.meta.env.VITE_9ROUTER_BASE_URL || "https://9.viber.id/v1").replace(/\/+$/, "");
+const AI_CHAT_URL = import.meta.env.VITE_AI_CHAT_URL || "/api/ai-chat";
 const AI_MODEL = import.meta.env.VITE_9ROUTER_MODEL || "weekly";
 
 // Streams a chat completion from the 9router (OpenAI-compatible) endpoint.
 // onToken(partialText) is called on every chunk so the UI can render live;
 // the full text is returned when the stream completes (null on failure).
 const generate9RouterResponse = async (prompt, systemInstruction = "", onToken = null) => {
-  const apiKey = import.meta.env.VITE_9ROUTER_API_KEY;
-  if (!apiKey) {
-    console.warn("9router API key not configured");
-    return null;
-  }
-
   const messages = [];
   if (systemInstruction) {
     messages.push({ role: "system", content: systemInstruction });
@@ -58,13 +52,10 @@ const generate9RouterResponse = async (prompt, systemInstruction = "", onToken =
   messages.push({ role: "user", content: prompt });
 
   try {
-    const response = await fetch(`${AI_BASE_URL}/chat/completions`, {
+    const response = await fetch(AI_CHAT_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'Speed Planner'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         model: AI_MODEL,

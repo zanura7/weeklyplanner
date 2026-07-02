@@ -7,7 +7,7 @@
 const AI_REQUEST_TIMEOUT = 30000; // 30 seconds
 const AI_MAX_RETRIES = 2;
 const AI_RETRY_DELAY = 1000; // 1 second
-const AI_BASE_URL = (import.meta.env.VITE_9ROUTER_BASE_URL || "https://9.viber.id/v1").replace(/\/+$/, "");
+const AI_CHAT_URL = import.meta.env.VITE_AI_CHAT_URL || "/api/ai-chat";
 const AI_MODEL = import.meta.env.VITE_9ROUTER_MODEL || "weekly";
 
 /**
@@ -49,13 +49,6 @@ export const generate9RouterResponse = async (
     model = AI_MODEL
   } = options;
 
-  const apiKey = import.meta.env.VITE_9ROUTER_API_KEY;
-  
-  if (!apiKey) {
-    console.warn("9router API key not configured");
-    return null;
-  }
-  
   const messages = [];
   if (systemInstruction) {
     messages.push({ role: "system", content: systemInstruction });
@@ -70,13 +63,10 @@ export const generate9RouterResponse = async (
       console.log(`AI Request attempt ${attempt + 1}/${maxRetries + 1}`);
 
       // Create request with timeout
-      const requestPromise = fetch(`${AI_BASE_URL}/chat/completions`, {
+      const requestPromise = fetch(AI_CHAT_URL, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'Speed Planner',
           'X-Request-ID': `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         },
         body: JSON.stringify({
@@ -181,19 +171,11 @@ export const generateStreamingResponse = async (
   onChunk,
   onComplete
 ) => {
-  const apiKey = import.meta.env.VITE_9ROUTER_API_KEY;
-  if (!apiKey) {
-    throw new Error('9router API key not configured');
-  }
-
   try {
-    const response = await fetch(`${AI_BASE_URL}/chat/completions`, {
+    const response = await fetch(AI_CHAT_URL, {
       method: 'POST',
       headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'Speed Planner'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         model: AI_MODEL,
@@ -247,17 +229,19 @@ export const generateStreamingResponse = async (
  * @returns {Promise<boolean>}
  */
 export const checkAIServiceHealth = async () => {
-  const apiKey = import.meta.env.VITE_9ROUTER_API_KEY;
-  if (!apiKey) {
-    return false;
-  }
-
   try {
     const response = await Promise.race([
-      fetch(`${AI_BASE_URL}/models`, {
-        headers: { 
-          'Authorization': `Bearer ${apiKey}`
-        }
+      fetch(AI_CHAT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: AI_MODEL,
+          messages: [{ role: 'user', content: 'health check' }],
+          max_tokens: 1,
+          temperature: 0
+        })
       }),
       createTimeout(5000) // 5 second timeout for health check
     ]);
