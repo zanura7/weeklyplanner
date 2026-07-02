@@ -1876,7 +1876,7 @@ export default function App() {
     
     setWeeklyOverviews(prev => ({
       ...prev,
-      [weekKey]: { ...prev[weekKey], ...update }
+      [weekKey]: { ...prev[weekKey], [field]: value, updated_at: update.updated_at }
     }));
 
     try {
