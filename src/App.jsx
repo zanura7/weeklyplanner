@@ -38,13 +38,19 @@ const HEADER_IMAGES = [
   "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?auto=format&fit=crop&q=80&w=2000"
 ];
 
-const generateOpenRouterResponse = async (prompt, systemInstruction = "") => {
-  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+const AI_BASE_URL = (import.meta.env.VITE_9ROUTER_BASE_URL || "https://9.viber.id/v1").replace(/\/+$/, "");
+const AI_MODEL = import.meta.env.VITE_9ROUTER_MODEL || "weekly";
+
+// Streams a chat completion from the 9router (OpenAI-compatible) endpoint.
+// onToken(partialText) is called on every chunk so the UI can render live;
+// the full text is returned when the stream completes (null on failure).
+const generateOpenRouterResponse = async (prompt, systemInstruction = "", onToken = null) => {
+  const apiKey = import.meta.env.VITE_9ROUTER_API_KEY;
   if (!apiKey) {
-    console.warn("OpenRouter API key not configured");
+    console.warn("9router API key not configured");
     return null;
   }
-  
+
   const messages = [];
   if (systemInstruction) {
     messages.push({ role: "system", content: systemInstruction });
@@ -52,29 +58,60 @@ const generateOpenRouterResponse = async (prompt, systemInstruction = "") => {
   messages.push({ role: "user", content: prompt });
 
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch(`${AI_BASE_URL}/chat/completions`, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
         'HTTP-Referer': window.location.origin,
         'X-Title': 'Speed Planner'
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-chat-v3-0324",
-        messages: messages
+        model: AI_MODEL,
+        messages: messages,
+        stream: true
       })
     });
-    
-    if (!response.ok) {
-      console.error("OpenRouter API Error Status:", response.status, response.statusText);
+
+    if (!response.ok || !response.body) {
+      console.error("9router API Error Status:", response.status, response.statusText);
       return null;
     }
-    
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || null;
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = "";
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || ""; // keep the last, possibly-incomplete line
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data:")) continue;
+        const payload = trimmed.slice(5).trim();
+        if (payload === "[DONE]") continue;
+        try {
+          const json = JSON.parse(payload);
+          const delta = json.choices?.[0]?.delta?.content || "";
+          if (delta) {
+            fullText += delta;
+            if (onToken) onToken(fullText);
+          }
+        } catch {
+          // ignore keep-alive / partial JSON fragments
+        }
+      }
+    }
+
+    return fullText || null;
   } catch (error) {
-    console.error("OpenRouter generation failed:", error);
+    console.error("9router generation failed:", error);
     return null;
   }
 };
@@ -453,11 +490,11 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
       [3. Three actionable pieces of advice for next week, formatted as a numbered list (1., 2., 3.).]
     `;
 
-    const result = await generateGeminiResponse(prompt);
+    const result = await generateGeminiResponse(prompt, "", (partial) => setAiText(partial));
 
     if (result) {
       setAiText(result);
-      onAiAnalyze(result); 
+      onAiAnalyze(result);
     } else {
       setAiError("Failed to connect to the AI service or retrieve a valid analysis.");
     }
@@ -627,7 +664,7 @@ const OverviewModal = ({ isOpen, onClose, appointments, metrics, weekKey, weekly
               </div>
             </div>
             
-            {isAnalyzing && (
+            {isAnalyzing && !aiText && (
               <div className="flex items-center gap-3 text-blue-500 text-sm py-4 justify-center">
                 <Loader2 className="animate-spin" size={20} />
                 <span className="font-bold">Thinking...</span>
@@ -974,38 +1011,56 @@ const AdminDashboard = ({ currentUser, onLogout, onBackToPlanner, userProfile })
 
     try {
       // Delete user's appointments
-      await getSupabase()
+      const { error: appointmentsError } = await getSupabase()
         .from('appointments')
         .delete()
         .eq('user_id', userId);
+      if (appointmentsError) {
+        throw new Error(`Failed to delete appointments: ${appointmentsError.message}`);
+      }
 
       // Delete user's tasks
-      await getSupabase()
+      const { error: tasksError } = await getSupabase()
         .from('tasks')
         .delete()
         .eq('user_id', userId);
+      if (tasksError) {
+        throw new Error(`Failed to delete tasks: ${tasksError.message}`);
+      }
 
       // Delete user's metrics
-      await getSupabase()
+      const { error: metricsError } = await getSupabase()
         .from('metrics')
         .delete()
         .eq('user_id', userId);
+      if (metricsError) {
+        throw new Error(`Failed to delete metrics: ${metricsError.message}`);
+      }
 
       // Delete user's weekly overviews
-      await getSupabase()
+      const { error: overviewsError } = await getSupabase()
         .from('weekly_overviews')
         .delete()
         .eq('user_id', userId);
+      if (overviewsError) {
+        throw new Error(`Failed to delete weekly overviews: ${overviewsError.message}`);
+      }
 
       // Finally delete user profile
-      const { error: profileError } = await getSupabase()
+      const { data: deletedProfiles, error: profileError } = await getSupabase()
         .from('profiles')
         .delete()
-        .eq('id', userId);
+        .eq('id', userId)
+        .select('id');
 
       if (profileError) {
         console.error('Error deleting user profile:', profileError);
         showNotification('Failed to delete user profile. Please try again.', 'error');
+        setUpdating(null);
+        return;
+      }
+      if (!deletedProfiles || deletedProfiles.length === 0) {
+        showNotification('No user profile was deleted. Check admin delete RLS policy.', 'error');
         setUpdating(null);
         return;
       }

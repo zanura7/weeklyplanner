@@ -55,6 +55,14 @@ CREATE POLICY "Admins can update all profiles" ON public.profiles
     )
   );
 
+CREATE POLICY "Admins can delete all profiles" ON public.profiles
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
 CREATE POLICY "Enable insert for authentication" ON public.profiles
   FOR INSERT WITH CHECK (auth.uid() = id);
 
